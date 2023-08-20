@@ -1,4 +1,5 @@
 # ViralBottleneck
+## Description
 This package is used for estimating viral transmission bottleneck size using different methods.
 The main steps to use program are:
 1. Transmission object creation
