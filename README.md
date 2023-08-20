@@ -7,7 +7,7 @@ The main steps to use program are:
    
 There are the he [manual](ViralBottleneck/manual_and_turtorial/ViralBottleneck_manual_0.1.0.pdf) and [turtorial](ViralBottleneck/manual_and_turtorial/Turtorial.pdf).
 
-The contents in tables in [turtorial](ViralBottleneck/manual_and_turtorial/Turtorial.pdf) are little crowded. Therefore, there are also a html file of turtorial in [manual_and_turtorial folder](ViralBottleneck/manual_and_turtorial). It would be better for users to read.
+The contents in tables in [turtorial](ViralBottleneck/manual_and_turtorial/Turtorial.pdf) are little crowded. Therefore, there are also a html file of turtorial in [manual_and_turtorial folder](ViralBottleneck/manual_and_turtorial). It would be better for users to read. Please download html file and open in the browser.
 
 ## Requirements
 - R 4.2.2
