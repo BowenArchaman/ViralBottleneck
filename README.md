@@ -5,9 +5,9 @@ The main steps to use program are:
 1. Transmission object creation
 2. Transmission bottleneck size calculation
    
-There are the he [manual](ViralBottleneck/manual_and_tutorial/ViralBottleneck_manual_0.1.0.pdf) and [turtorial](ViralBottleneck/manual_and_tutorial/Tutorial.pdf).
+There are the he [manual](manual_and_tutorial/ViralBottleneck_manual_0.1.0.pdf) and [turtorial](manual_and_tutorial/Tutorial.pdf).
 
-The contents in tables in [turtorial](ViralBottleneck/manual_and_turtorial/Tutorial.pdf) are little crowded. Therefore, there are also a html file of turtorial in [manual_and_turtorial folder](ViralBottleneck/manual_and_tutorial). It would be better for users to read. Please download html file and open in the browser.
+The contents in tables in [turtorial](manual_and_turtorial/Tutorial.pdf) are little crowded. Therefore, there are also a html file of turtorial in [manual_and_turtorial folder](manual_and_tutorial). It would be better for users to read. Please download html file and open in the browser.
 
 ## Requirements
 - R 4.2.2
