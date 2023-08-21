@@ -7,7 +7,7 @@ The main steps to use program are:
    
 There are the he [manual](manual_and_tutorial/ViralBottleneck_manual_0.1.0.pdf) and [turtorial](manual_and_tutorial/Tutorial.pdf).
 
-The contents in tables in [turtorial](manual_and_turtorial/Tutorial.pdf) are little crowded. Therefore, there are also a html file of turtorial in [manual_and_turtorial folder](manual_and_tutorial). It would be better for users to read. Please download html file and open in the browser.
+The contents in tables in [turtorial](manual_and_turtorial/Tutorial.pdf) are little crowded. Therefore, there are also a html file of turtorial in [manual_and_turtorial folder](manual_and_tutorial). It would be better for users to read. Please download html file and open in the browser. The test data for "ViralBottleneck" is in [test_dataset folder](test_dataset).
 
 ## Download
 The codes for downloading package "ViralBottleneck" are below: 
