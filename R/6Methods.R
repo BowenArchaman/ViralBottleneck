@@ -36,6 +36,7 @@ Effective_bottleneck_size_KL <- function(k,shared_site_table){
   n_s=nrow(shared_site_table)
   KL=sum(KL_shared_table(shared_site_table))
   one_val_likelihood=-(k*KL)+(n_s/2)*log(k)
+  one_val_likelihood=log(one_val_likelihood)
   return(one_val_likelihood)
 }
 
