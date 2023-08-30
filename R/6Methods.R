@@ -550,7 +550,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   table=Prepared_matrix_for_methods(shared_table,tidy_table,error_calling)
   if(method == "KL"){
     v=Range_function_KL(tidy_table,Nbmin,Nbmax)
-    res=find_confidence_interval(v,Nbmin=Nbmin)
+    res=find_confidence_interval(log(v),Nbmin=Nbmin)
     Nb=list(res[[3]],res[[1]],res[[2]])
     if(plot==TRUE){
       dir_name=paste0(transmisson_id,"_plot")
