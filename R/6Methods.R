@@ -428,8 +428,8 @@ Summary_ob <- function(transmission_ob,save=FALSE,file_name=NULL){
   summary_table=cbind.data.frame(ids[,1],ids[,2],content[,2:ncol(content)])
   row.names(summary_table)=1:nrow(summary_table)
   names(summary_table)=transmission_info
-  if(save==TRUE && file_name==NULL){stop("File name is null, please input the file name.")}
-  if(save==TRUE && file_name!=NULL){
+  if((save==TRUE) && (file_name==NULL)){stop("File name is null, please input the file name.")}
+  if((save==TRUE) && (file_name!=NULL)){
     check_file(file_name)
     write.csv(summary_table,file = file_name)
     }
