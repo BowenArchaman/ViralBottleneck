@@ -46,7 +46,7 @@ Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
   name_v=Nbmin:Nbmax
   class(name_v)="character"
   names(final_likelihood_vector)=name_v
-  return(log(final_likelihood_vector))
+  return(final_likelihood_vector)
 }
 
 #effective population size calculation
