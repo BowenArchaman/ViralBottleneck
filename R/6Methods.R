@@ -563,6 +563,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   if(method=="Beta_binomial_Approximate"){
     matrix_app=Convert_to_Approxmate_method_matrix(table)
     v=Range_function_Approximate(variant_calling=variant_calling ,table=matrix_app,Nbmin = Nbmin,Nbmax=Nbmax)
+    res=find_confidence_interval(v,Nbmin=Nbmin)
     Nb=list(res[[3]],res[[1]],res[[2]])
     if(plot==TRUE){
       dir_name=paste0(transmisson_id,"_plot")
