@@ -164,7 +164,7 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
 
   for(j in 0:k){
     pbinVd2=dbinom(j, size=k, prob=absent[,1])
-    add2=pbeta(0.03, j, (k-j))*pbinVd2
+    add2=pbeta(variant_calling, j, (k-j))*pbinVd2
     likelihood_vector_absent=likelihood_vector_absent+add2
   }
   sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
@@ -230,10 +230,16 @@ find_confidence_interval <- function(final_vector,Nbmin){
   lowest_index=Nbmin-1
   max_value=max(final_vector)
   max_index=which.max(final_vector)+lowest_index
-  height=max_value-1.92
+  height=max_value- qchisq(0.95,df=1)/2
   CI=final_vector[final_vector>=height]
-  CI_low=which(final_vector==CI[1])-1 + lowest_index
-  CI_high=which(final_vector==CI[length(CI)])+1 +lowest_index
+  CI_low=which(final_vector==CI[1]) + lowest_index
+  CI_low=min(CI_low)
+  CI_high=which(final_vector==CI[length(CI)])+lowest_index
+  CI_high=max(CI_high)
+  if(is.na(CI[1])){
+    CI_low=max_index
+    CI_high=max_index+1
+  }
   CI_list=list(CI_low,CI_high,max_index)
   return(CI_list)
 }
