@@ -237,14 +237,17 @@ Range_function_Exact<-function(variant_calling,table,Nbmin,Nbmax){
 }
 
 find_confidence_interval <- function(final_vector,Nbmin){
+  final_vector=as.numeric(final_vector[1,])
+  l_OK = is.finite(final_vector)
   lowest_index=Nbmin-1
+  final_vector=final_vector[l_OK]
   max_value=max(final_vector)
   max_index=which.max(final_vector)+lowest_index
   height=max_value- qchisq(0.95,df=1)/2
   CI=final_vector[final_vector>=height]
-  CI_low=which(final_vector==CI[1]) + lowest_index
+  CI_low=which(final_vector==CI[1]) + lowest_index-1
   #CI_low=min(CI_low)
-  CI_high=which(final_vector==CI[length(CI)])+lowest_index
+  CI_high=which(final_vector==CI[length(CI)])+lowest_index+1
   #CI_high=max(CI_high)
   if(is.na(CI[1])){
     CI_low=max_index
