@@ -254,6 +254,7 @@ find_confidence_interval <- function(final_vector,Nbmin){
     CI_high=max_index+1
   }
   CI_list=list(CI_low,CI_high,max_index)
+  print(CI_list)
   return(CI_list)
 }
 
