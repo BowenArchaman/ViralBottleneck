@@ -85,6 +85,7 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table){
 
   donor=mix[,6:9]
   sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
+  sort=sort[sort[,2]>0,]
   sort=sort[sort[,2]!=sort[,3],]#check the same variants
   sort=sort[sort[,3]<=0.000001,]#filter non-biallelic
   res=merge(mix,sort,by.x=0,by.y=0)
