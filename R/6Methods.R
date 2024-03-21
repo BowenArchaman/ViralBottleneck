@@ -174,9 +174,7 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   likelihood_vector_present=numeric(nrow(present))
   likelihood_vector_absent=numeric(nrow(absent))
   for(i in 0:k){
-    if(i==0){P1=1}
-    if(i==k){P1=0}
-    else{P1=dbeta(present[,2], i, k-i)}
+    P1=dbeta(present[,2], i, k-i)
     pbinVd1=dbinom(i, size=k, prob=present[,1])
     add1=P1*pbinVd1
     #print(is.infinite(add1))
@@ -185,9 +183,7 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   }
   
   for(j in 0:k){
-    if(j==0){P2=0}
-    if(j==k){P2=0}
-    else{P2=pbeta(variant_calling, j, k-j)}
+    P2=pbeta(variant_calling, j, k-j)
     pbinVd2=dbinom(j, size=k, prob=absent[,1])
     add2=P2*pbinVd2
     #print(is.infinite(add2))
