@@ -119,6 +119,31 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table){
   return(final_matrix)
 }
 
+Create_matrix_for_biallelic_PA <- function(shared_table,tidy_shared_table){
+  mix=create_max_f(shared_table,tidy_shared_table)
+
+  donor=mix[,6:9]
+  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
+  sort=sort[sort[,2]>0,]
+  sort=sort[sort[,2]!=sort[,3],]#check the same variants
+  sort=sort[sort[,3]<=0.000001,]#filter non-biallelic
+  res=merge(mix,sort,by.x=0,by.y=0)
+  row.names(res)=res[,1]
+  res=res[,7:18]
+  res$v5=0
+  col11=apply(res,1,find_dominant_not_mutated)
+  res[,11]=col11
+  col12=apply(res,1,find_dominant_in_recipient)
+  res[,12]=col12
+  col13=apply(res,1,find_variant_in_recipient)
+  res[,13]=col13
+  #tidy up final matrix
+  res=res[,-11]
+  final_matrix=res[,9:12]
+  return(final_matrix)
+}
+
+
 Convert_to_proportion_sample <- function(sample_sum_table){
   for(i in 1:2){
     sample_sum_table[,i]=sample_sum_table[,i]/sample_sum_table[,3]
@@ -130,6 +155,21 @@ Convert_to_proportion_sample <- function(sample_sum_table){
 #filter the variants which would not be distinguished from errors.
 Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,error_threshold){
   prepared_matrix=Create_matrix_for_biallelic(shared_sites_table,tidy_sites_table)
+  donor=prepared_matrix[,1:2]
+  recipient=prepared_matrix[,3:4]
+  recipient_counts=prepared_matrix[,3:4]
+  donor$sum=rowSums(donor)
+  recipient$sum=rowSums(recipient)
+  donor=Convert_to_proportion_sample(donor)
+  recipient=Convert_to_proportion_sample(recipient)
+  proportion_matrix=cbind.data.frame(donor,recipient)
+  proportion_matrix=cbind.data.frame(proportion_matrix,recipient_counts)
+  proportion_matrix=proportion_matrix[proportion_matrix[,2]>error_threshold,]
+  return(proportion_matrix)
+}
+
+Prepared_matrix_for_methods_PA <- function(shared_sites_table,tidy_sites_table,error_threshold){
+  prepared_matrix=Create_matrix_for_biallelic_PA(shared_sites_table,tidy_sites_table)
   donor=prepared_matrix[,1:2]
   recipient=prepared_matrix[,3:4]
   recipient_counts=prepared_matrix[,3:4]
@@ -620,7 +660,8 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     return(Nb)
   }
   if(method=="Presence-Absence"){
-    matrix=Convert_to_Approxmate_method_matrix(table)
+    table_PA=Prepared_matrix_for_methods_PA(shared_table,tidy_table,error_calling)
+    matrix=Convert_to_Approxmate_method_matrix(table_PA)
     v=Range_function_preOrabsent(variant_calling = variant_calling,table = matrix,Nbmin = Nbmin,Nbmax = Nbmax)
     res=find_confidence_interval(v,Nbmin=Nbmin)
     Nb=list(res[[3]],res[[1]],res[[2]])
