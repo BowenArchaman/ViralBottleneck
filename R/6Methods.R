@@ -299,9 +299,9 @@ find_confidence_interval <- function(final_vector,Nbmin){
   height=max_value- qchisq(0.95,df=1)/2
   CI=final_vector[final_vector>=height]
   CI_low=which(final_vector==CI[1]) + lowest_index-1
-  #CI_low=min(CI_low)
+  CI_low=min(CI_low)
   CI_high=which(final_vector==CI[length(CI)])+lowest_index+1
-  #CI_high=max(CI_high)
+  CI_high=max(CI_high)
   if(is.na(CI[1])){
     CI_low=max_index
     CI_high=max_index+1
