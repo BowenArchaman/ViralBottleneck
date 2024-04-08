@@ -98,26 +98,46 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table){
   res[,12]=col12
   col13=apply(res,1,find_variant_in_recipient)
   res[,13]=col13
-  if(FALSE %in% res[,11]){
-    fixed=as.data.frame(res[res[,11]==FALSE,])
-    not_fixed=as.data.frame(res[res[,11]==TRUE,])
-    col9=fixed[,9]
-    col10=fixed[,10]
-    col12=fixed[,12]
-    col13=fixed[,13]
-    fixed[,9]=col10
-    fixed[,10]=col9
-    fixed[,12]=col13
-    fixed[,13]=col12
-    names(fixed)=names(not_fixed)
-    res=rbind.data.frame(not_fixed,fixed)
-}
-
-  #tidy up final matrix
   res=res[,-11]
   final_matrix=res[,9:12]
   return(final_matrix)
 }
+
+find_fixed_variant_app_onerow <- function(row,variant_calling){
+  if(row[2]<=(1-variant_calling)){
+    row=row
+    
+  }
+  else{
+    row[1]=1-row[1]
+    row[2]=1-row[2]
+  }
+  return(row)
+}
+
+find_fixed_variant_app<- function(table,variant_calling){
+  table=as.data.frame(t(apply(table,1,find_fixed_variant_app_onerow,variant_calling=variant_calling)))
+  return(table)
+}
+
+
+
+find_fixed_variant_exact_onerow <- function(row,variant_calling){
+  if(row[2]<=(1-variant_calling)*row[3]){
+    row=row
+    
+  }
+  else{
+    row[1]=1-row[1]
+    row[2]=row[3]-row[2]
+  }
+  return(row)
+}
+find_fixed_variant_exact<- function(table,variant_calling){
+  table=as.data.frame(t(apply(table,1,find_fixed_variant_exact_onerow,variant_calling=variant_calling)))
+  return(table)
+}
+
 
 Create_matrix_for_biallelic_PA <- function(shared_table,tidy_shared_table){
   mix=create_max_f(shared_table,tidy_shared_table)
@@ -209,6 +229,7 @@ filtered_absent_dominant_variant<-function(prepared_matrix,error_calling){
 }
 ############################################################################################
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
+  table=find_fixed_variant_app(table,variant_calling)
   present=table[table[,2]>=variant_calling,]
   absent=table[table[,2]<variant_calling,]
   likelihood_vector_present=numeric(nrow(present))
@@ -245,6 +266,7 @@ Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
 }
 
 one_Nbval_function_Exact<- function(k,table,variant_calling){
+  table=find_fixed_variant_exact(table,variant_calling)
   present=table[table[,2]>=variant_calling*table[,3],]
   absent=table[table[,2]<variant_calling*table[,3],]
   likelihood_vector_present=numeric(nrow(present))
@@ -335,6 +357,7 @@ Range_function_preOrabsent <- function(variant_calling,table,Nbmin,Nbmax){
 
 #binomial method
 one_Nbval_function_binomial <- function(k,table,variant_calling){
+  table=find_fixed_variant_exact(table,variant_calling)
   present=table[table[,2]>=variant_calling*table[,3],]
   absent=table[table[,2]<variant_calling*table[,3],]
   likelihood_vector_present=numeric(nrow(present))
