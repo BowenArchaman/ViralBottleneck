@@ -644,6 +644,10 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   shared_table=Create_shared_variant_site_table(one_pair,NonSyn_or_Syn=NonSyn_or_Syn)
   tidy_table = Before_calculation_table(one_pair,donor_depth_threshold = donor_depth_threshold, recipient_depth_threshold=recipient_depth_threshold,error_calling=error_calling,NonSyn_or_Syn=NonSyn_or_Syn)
   table=Prepared_matrix_for_methods(shared_table,tidy_table,error_calling)
+  if(log==TRUE){
+   write.csv(table,paste0(transmisson_id,"_log.csv"),row.names = FALSE) 
+  }
+  
   if(method == "KL"){
     v=Range_function_KL(tidy_table,Nbmin,Nbmax)
     res=find_confidence_interval(v,Nbmin=Nbmin)
