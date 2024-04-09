@@ -638,6 +638,8 @@ log_main_function<-function(ob,donor_threshold,recipient_threshold,NonSyn_or_Syn
 
 # One transmission pair
 #############################################################################################
+
+#' @export
 one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,recipient_depth_threshold,error_calling,plot,log,log_dir_name,log_table,variant_calling,Nbmin,Nbmax,NonSyn_or_Syn){
   con=NA
   transmisson_id = one_pair@transmission_pair_ID
