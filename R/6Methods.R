@@ -312,6 +312,7 @@ Range_function_Exact<-function(variant_calling,table,Nbmin,Nbmax){
 }
 
 find_confidence_interval <- function(final_vector,Nbmin){
+  if(Nbmin==1){Nbmin=2}
   final_vector=as.numeric(final_vector[1,])
   l_OK = is.finite(final_vector)
   lowest_index=Nbmin-1
