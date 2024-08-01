@@ -275,8 +275,8 @@ one_Nbval_function_Exact<- function(k,table,variant_calling){
     for(i in 0:k){
     alpha=i
     Beta=(k-i)
-    if(alpha==0){alpha=0.00001}
-    if(Beta==0){Beta=0.00001}
+    if(alpha==0){alpha=10^-9}
+    if(Beta==0){Beta=10^-9}
     m=alpha / (alpha+Beta)
     s=(alpha+Beta)
     pbinVd1=dbinom(i, size=k, prob=present[,1])
@@ -288,8 +288,8 @@ one_Nbval_function_Exact<- function(k,table,variant_calling){
     for(j in 0:k){
       alpha=j
       Beta=(k-j)
-      if(alpha==0){alpha=0.00001}
-      if(Beta==0){Beta=0.00001}
+      if(alpha==0){alpha=10^-9}
+      if(Beta==0){Beta=10^-9}
       m=alpha / (alpha+Beta)
       s=(alpha+Beta)
       pbinVd2=dbinom(j, size=k, prob=absent[,1])
