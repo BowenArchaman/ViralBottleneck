@@ -230,6 +230,7 @@ filtered_absent_dominant_variant<-function(prepared_matrix,error_calling){
 ############################################################################################
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
   table=find_fixed_variant_app(table,variant_calling)
+  table=subset(table,table[,1]>=variant_calling)
   present=table[table[,2]>=variant_calling,]
   absent=table[table[,2]<variant_calling,]
   likelihood_vector_present=numeric(nrow(present))
@@ -267,6 +268,7 @@ Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
 
 one_Nbval_function_Exact<- function(k,table,variant_calling){
   table=find_fixed_variant_exact(table,variant_calling)
+  table=subset(table,table[,1]>=variant_calling)
   present=table[table[,2]>=variant_calling*table[,3],]
   absent=table[table[,2]<variant_calling*table[,3],]
   likelihood_vector_present=numeric(nrow(present))
