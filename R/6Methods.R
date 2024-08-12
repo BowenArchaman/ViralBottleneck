@@ -316,7 +316,10 @@ Range_function_Exact<-function(variant_calling,table,Nbmin,Nbmax){
 find_confidence_interval <- function(final_vector,Nbmin){
   final_vector=as.numeric(final_vector[1,])
   l_OK = is.finite(final_vector)
-  lowest_index=Nbmin-1
+  if(FALSE %in% l_OK){
+    lowest_index=Nbmin
+  }
+  else{lowest_index=Nbmin-1}
   final_vector=final_vector[l_OK]
   max_value=max(final_vector)
   max_index=which.max(final_vector)+lowest_index
