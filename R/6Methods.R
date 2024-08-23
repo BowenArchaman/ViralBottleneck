@@ -592,7 +592,7 @@ plot_likelihood_function <- function(id,final_likelihood_vector,confidence_res,m
   x=t(table_final_likelihood_vector)
   x=data.frame(x)
   png(plot_name)
-  ggp<-ggplot(x,aes(x=as.numeric(x$X2),y=as.numeric(x$X1)))+
+  ggp<-ggplot(x,aes(x=as.numeric(X2),y=as.numeric(X1)))+
     xlab("Nb")+ylab("log-likelihood")+geom_line(col="darkorange2",linewidth=1.5)+
     geom_vline(xintercept=confidence_res[[3]],col="red",linewidth=0.5) +
     annotate("rect",xmin=confidence_res[[1]], xmax=confidence_res[[2]], ymin=-Inf, ymax=Inf,alpha=.2,fill="yellow")+
