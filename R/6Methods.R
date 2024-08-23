@@ -807,7 +807,6 @@ Bottleneck_size_Calculation <- function(transmission_ob,method="KL",plot=FALSE,s
     N_bs=lapply(ob, one_transmission_pair_process,method=method,donor_depth_threshold=donor_depth_threshold, recipient_depth_threshold=recipient_depth_threshold,error_calling=error_calling,plot=plot,log=log,log_dir_name=log_dir,variant_calling=variant_calling,Nbmin=Nbmin,Nbmax=Nbmax,NonSyn_or_Syn=NonSyn_or_Syn)
     transmission_info=c("transmission pairs","transmission_bottleneck_size")
     N_bs=do.call(rbind.data.frame,N_bs)
-    print(N_bs)
     N_table=cbind.data.frame(get_transmission_pairs(ob),N_bs)
     ids=t(data.frame(strsplit(N_table[,1],"-")))
     N_table=cbind.data.frame(ids[,1],ids[,2],N_table[,2:ncol(N_table)])
