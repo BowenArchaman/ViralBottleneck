@@ -103,6 +103,19 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table){
   return(final_matrix)
 }
 
+Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table){
+  mix=create_max_f(shared_table,tidy_shared_table)
+  donor=mix[,6:9]
+  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
+  sort=sort[sort[,2]>0,] #filtered the no-variation sites
+  var_sites=merge(sort[,1:2],tidy_table,by="row.names")
+  row.names(var_sites)=var_sites[,1]
+  var_sites=var_sites[,-(1:3)]
+  return(var_sites)
+}
+
+
+
 find_fixed_variant_app_onerow <- function(row,variant_calling){
   if(row[2]<=(1-variant_calling)){
     row=row
