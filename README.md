@@ -13,7 +13,7 @@ The test data for "ViralBottleneck" is in [test_dataset folder](test_dataset).
 To install the package in R use the following commands: 
 ```
 library(devtools)
-install_github("BowenArchaman/ViralBottleneck_t")
+install_github("BowenArchaman/ViralBottleneck")
 library(ViralBottleneck)
 ```
 
