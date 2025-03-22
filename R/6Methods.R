@@ -535,7 +535,7 @@ Collect_values_in_table_for_wf <- function(transmission_obs,donor_depth_threshol
 
 #' @export
 Summary_ob <- function(transmission_ob,save=FALSE,file_name=NULL){
-  transmission_info=c("donors","recipients","number of shared variants")
+  transmission_info=c("donors","recipients","number of shared sites")
   content=data.frame(cbind(get_transmission_pairs(transmission_ob),get_shared_site_number(transmission_ob)))
   ids=t(data.frame(strsplit(content[,1],"-")))
   summary_table=cbind.data.frame(ids[,1],ids[,2],content[,2:ncol(content)])
