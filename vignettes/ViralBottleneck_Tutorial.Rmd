@@ -116,7 +116,7 @@ subset_transmission_pairs = read.table("H1N1_transmission_pairs_specify.csv",hea
 The program would create individual folder for each transmission pair to store the plot. Example code for creating plot:
 
 ```{r,results='hide',eval = FALSE,tidy=FALSE}
- BB_App_output_log =  
+ BB_App_output_plot =  
             Bottleneck_size_Calculation(
             transmission_ob = H1N1_ob,                          
             method = "Beta_binomial_Approximate",
