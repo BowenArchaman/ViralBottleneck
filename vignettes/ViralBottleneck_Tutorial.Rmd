@@ -1,8 +1,9 @@
 ---
-title: "Tutorial of ViralBottleneck"
-output: rmarkdown::html_vignette
+title: "Tutorial"
+output: rmarkdown::pdf_document
+#html_vignette
 vignette: >
-  %\VignetteIndexEntry{Tutorial of ViralBottleneck}
+  %\VignetteIndexEntry{my-vignette}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,11 +15,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup,include=FALSE}
+```{r setup, include=FALSE}
 library(ViralBottleneck)
-library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
 ```
+
+
 
 This package is used for estimating viral transmission bottleneck sizes using different methods.
 
@@ -44,8 +47,8 @@ Note: Do not put the "-" in name of sample.
 After making sure the sample files all exist according to the transmission pairs, start to create transmission object. example code:
 
 ```{r,results='hide',eval = FALSE}
-H1N1_t = read.table("Example_TansmissionPairs.csv",header = TRUE,sep = ",")
-H1N1_ob = CreateTransmissionObject(H1N1_t)
+Sim_trans = read.table("Example_TansmissionPairs.csv",header = TRUE,sep = ",") 
+Sim_ob = CreateTransmissionObject(Sim_trans)
 ```
 
 **2.1 Subset transmission object**
@@ -54,7 +57,7 @@ The transmission object could be used as list.
 
 ```{r,results='hide',eval = FALSE}
 #Get first 3 transmission object
-H1N1_ob_subset = H1N1_ob[1:2]
+Sim_ob_subset = Sim_ob[1:2]
 ```
 
 ## 3. Summary transmission object
@@ -62,14 +65,17 @@ H1N1_ob_subset = H1N1_ob[1:2]
 After creating transmission object, the `Summary_ob` function would provide the information of shared sites (the sites belong to shared sites should be sequenced both in donor and recipient.) for users. Example code:
 
 ```{r,results='hide',eval = FALSE}
-Summary_H1N1 = Summary_ob(H1N1_ob)
+Summary_Sim = Summary_ob(Sim_ob)
 ```
 
 The result:
 
 ```{r, echo=FALSE}
 data("Example_summaryOutput")
+
+names(Example_summaryOutput)=c("Donors","Recipients","number.of.shared.sites")
 kable(Example_summaryOutput)
+
 ```
 
 ## 4. Transmission bottleneck size estimation
@@ -83,7 +89,7 @@ Take calculation using Beta-binomial method approximate version as an example:
 ```{r,results='hide',eval = FALSE,tidy=FALSE}
 BB_App_output = 
   Bottleneck_size_Calculation(
-           transmission_ob = H1N1_ob,
+           transmission_ob = Sim_ob,
            method ="Beta_binomial_Approximate",
            error_calling = 0,
            variant_calling = 0.03,
@@ -111,14 +117,14 @@ subset_transmission_pairs = read.table("H1N1_transmission_pairs_specify.csv",hea
 
 **4.3 Calculation**
 
-`Bottleneck_size_Calculation` could create plot of likelihood curve for each transmission pairs in working directory. However, this argument just used for the methods using maximum likelihoods estimation, including `KL` method, `Presence-Absence` method, `Binomial` method, `Beta_binomial_Approximate` method and `Beta_binomial_Exact` method (method details: link). Using `show_table` and `plot` options could help to save output and obtain the plots of likelihood curve for each transmission pairs.
+`Bottleneck_size_Calculation` could create plot of likelihood curve for each transmission pairs in working directory. However, this argument just used for the methods using maximum likelihoods estimation, including `KL` method [(Emmett et al., 2015)](https://pmc.ncbi.nlm.nih.gov/articles/PMC4339230/), `Presence-Absence` method [(Sacristán et al., 2011)](https://journals.asm.org/doi/full/10.1128/jvi.00057-11), `Binomial` method [(Leonard et al., 2017)](https://journals.asm.org/doi/10.1128/jvi.00171-17), `Beta_binomial_Approximate` method [(Leonard et al., 2017)](https://journals.asm.org/doi/10.1128/jvi.00171-17) and `Beta_binomial_Exact` method [(Leonard et al., 2017)](https://journals.asm.org/doi/10.1128/jvi.00171-17). Using `show_table` and `plot` options could help to save output and obtain the plots of likelihood curve for each transmission pairs. (Note: if you want to access the original publication for each methods, you could click the *Publication link* after each methods)
 
 The program would create individual folder for each transmission pair to store the plot. Example code for creating plot:
 
 ```{r,results='hide',eval = FALSE,tidy=FALSE}
  BB_App_output_plot =  
             Bottleneck_size_Calculation(
-            transmission_ob = H1N1_ob,                          
+            transmission_ob = Sim_ob,                          
             method = "Beta_binomial_Approximate",
             error_calling = 0,
             variant_calling = 0.03,
@@ -133,19 +139,18 @@ The program would create individual folder for each transmission pair to store t
 
 The plot of likelihood curve for one transmission pairs (donor_3000-50_3_All_r1) is below:
 
-
-![](donor_3000-50_3_All_r1_Beta_binomial_Approximate_plot.png){width="50%"}
+![](C:/Users/Bowen Zheng/Desktop/Publication/Santa-sim/Simulated_data_plot/Validation/donor_3000-50_3_All_r1_plot/donor_3000-50_3_All_r1_Beta_binomial_Approximate_plot.png){width="457"}
 
 **4.4 Log file**
 
-`Bottleneck_size_Calculation` could create log file containing number of variant sites used in calculation and number of variant sites filtered before calculation in working directory.
+`Bottleneck_size_Calculation` could create log file containing number of variant used in calculation and number of variant filtered before calculation in working directory.
 
 Example code:
 
 ```{r,results='hide',eval = FALSE,tidy=FALSE}
  BB_App_output_log =  
             Bottleneck_size_Calculation(
-            transmission_ob = H1N1_ob,                          
+            transmission_ob = Sim_ob,                          
             method = "Beta_binomial_Approximate",
             error_calling = 0,
             variant_calling = 0.03,
@@ -164,3 +169,22 @@ Output of `log` argument:
 data("Example_log")
 kable(Example_log)
 ```
+ **4.5 Methods comparison**
+ 
+ Given that one major purpose of the package is to compare calculation of bottleneck sizes
+ across methods on the same data set, it would be nice to illustrate this. For example, compare
+ all methods (except Wright-Fisher, see below) on a single pair, Sim_ob[1]:
+
+```{r,results='hide',eval = FALSE,tidy=FALSE}
+all_methods <-
+  c("KL", "Presence-Absence", "Binomial", "Beta_binomial_Approximate", "Beta_binomial_Exact") 
+
+compare_methods <-
+  t(sapply(all_methods, function(m){
+    Bottleneck_size_Calculation(Sim_ob[1], method = m)
+  }))
+
+compare_methods
+
+```
+
