@@ -5,7 +5,7 @@ The main steps to use the program are:
 1. Create the transmission object
 2. Calculate the transmission bottleneck size 
    
-There are the [manual](manual_and_tutorial/ViralBottleneck_manual_0.1.0.pdf) and [tutorial](manual_and_tutorial/ViralBottleneck_Tutorial.pdf).
+There are the links for [manual](manual_and_tutorial/ViralBottleneck_manual_0.1.0.pdf) and [tutorial](manual_and_tutorial/ViralBottleneck_Tutorial.pdf).
 
 The test data for "ViralBottleneck" is in [test_dataset folder](test_dataset).
 
