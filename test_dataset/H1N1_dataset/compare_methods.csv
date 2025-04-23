@@ -1,0 +1,6 @@
+,donor,recipient,transmission_bottleneck_size,CI_low,CI_high
+KL,681_1_H1N1_donor,681_1_H1N1_recipient,21,14,30
+Presence-Absence,681_1_H1N1_donor,681_1_H1N1_recipient,13,9,19
+Binomial,681_1_H1N1_donor,681_1_H1N1_recipient,66,66,67
+Beta_binomial_Approximate,681_1_H1N1_donor,681_1_H1N1_recipient,50,30,78
+Beta_binomial_Exact,681_1_H1N1_donor,681_1_H1N1_recipient,49,30,78
