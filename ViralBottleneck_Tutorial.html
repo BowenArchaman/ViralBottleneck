@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Tutorial</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>$(document).ready(function(){
+    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+    if ($('[data-toggle="popover"]').popover === 'function') {
+        $('[data-toggle="popover"]').popover();
+    }
+});
+</script>
+<style type="text/css">
+.lightable-minimal {
+border-collapse: separate;
+border-spacing: 16px 1px;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-minimal td {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal th {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal thead tr:last-child th {
+border-bottom: 2px solid #00000050;
+empty-cells: hide;
+}
+.lightable-minimal tbody tr:first-child td {
+padding-top: 0.5em;
+}
+.lightable-minimal.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-minimal.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic {
+border-top: 0.16em solid #111111;
+border-bottom: 0.16em solid #111111;
+width: 100%;
+margin-bottom: 10px;
+margin: 10px 5px;
+}
+.lightable-classic tfoot tr td {
+border: 0;
+}
+.lightable-classic tfoot tr:first-child td {
+border-top: 0.14em solid #111111;
+}
+.lightable-classic caption {
+color: #222222;
+}
+.lightable-classic td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic thead tr:last-child th {
+border-bottom: 0.10em solid #111111;
+}
+.lightable-classic.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic-2 {
+border-top: 3px double #111111;
+border-bottom: 3px double #111111;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-classic-2 tfoot tr td {
+border: 0;
+}
+.lightable-classic-2 tfoot tr:first-child td {
+border-top: 3px double #111111;
+}
+.lightable-classic-2 caption {
+color: #222222;
+}
+.lightable-classic-2 td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic-2 th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic-2 tbody tr:last-child td {
+border-bottom: 3px double #111111;
+}
+.lightable-classic-2 thead tr:last-child th {
+border-bottom: 1px solid #111111;
+}
+.lightable-classic-2.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic-2.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #EEE;
+border-collapse: collapse;
+margin-bottom: 10px;
+}
+.lightable-material tfoot tr td {
+border: 0;
+}
+.lightable-material tfoot tr:first-child td {
+border-top: 1px solid #EEE;
+}
+.lightable-material th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+}
+.lightable-material td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+border-top: 1px solid #eeeeee;
+}
+.lightable-material.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #ddd;
+}
+.lightable-material-dark {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #FFFFFF12;
+border-collapse: collapse;
+margin-bottom: 10px;
+background-color: #363640;
+}
+.lightable-material-dark tfoot tr td {
+border: 0;
+}
+.lightable-material-dark tfoot tr:first-child td {
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF60;
+}
+.lightable-material-dark td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF;
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark.lightable-hover tbody tr:hover {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody tr:nth-child(even) {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material-dark.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #FFFFFF12;
+}
+.lightable-paper {
+width: 100%;
+margin-bottom: 10px;
+color: #444;
+}
+.lightable-paper tfoot tr td {
+border: 0;
+}
+.lightable-paper tfoot tr:first-child td {
+border-top: 1px solid #00000020;
+}
+.lightable-paper thead tr:last-child th {
+color: #666;
+vertical-align: bottom;
+border-bottom: 1px solid #00000020;
+line-height: 1.15em;
+padding: 10px 5px;
+}
+.lightable-paper td {
+vertical-align: middle;
+border-bottom: 1px solid #00000010;
+line-height: 1.15em;
+padding: 7px 5px;
+}
+.lightable-paper.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-paper.lightable-striped tbody tr:nth-child(even) {
+background-color: #00000008;
+}
+.lightable-paper.lightable-striped tbody td {
+border: 0;
+}
+</style>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Tutorial</h1>
+
+
+
+<p>This package is used for estimating viral transmission bottleneck
+sizes using different methods.</p>
+<div id="install-package-and-download-test-dataset" class="section level2">
+<h2>1. Install package and download test dataset</h2>
+<p>First step, install the package “ViralBottleneck” and download
+dataset in test_dataset folder</p>
+</div>
+<div id="create-transmission-object" class="section level2">
+<h2>2. Create transmission object</h2>
+<p>Second step, the transmission object need to be created before
+bottleneck size estimation. To create transmission object, the working
+directory need to meet two requirements: transmission pairs table and
+sample files used for estimation. This package would extract sample
+files according to the transmission pairs table the users input.</p>
+<p>The example of the transmission pairs table is below (in
+<code>test_dataset</code> folder in package)</p>
+<table class="table" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+donor
+</th>
+<th style="text-align:left;">
+recipient
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_0_All_r1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_3_All_r1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_6_All_r1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_9_All_r1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_12_All_r1
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note: Do not put the “-” in name of sample.</p>
+<p>After making sure the sample files all exist according to the
+transmission pairs, start to create transmission object. example
+code:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>Sim_trans <span class="ot">=</span> <span class="fu">read.table</span>(<span class="st">&quot;Example_TansmissionPairs.csv&quot;</span>,<span class="at">header =</span> <span class="cn">TRUE</span>,<span class="at">sep =</span> <span class="st">&quot;,&quot;</span>) </span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>Sim_ob <span class="ot">=</span> <span class="fu">CreateTransmissionObject</span>(Sim_trans)</span></code></pre></div>
+<p><strong>2.1 Subset transmission object</strong></p>
+<p>The transmission object could be used as list.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Get first 3 transmission object</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>Sim_ob_subset <span class="ot">=</span> Sim_ob[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span></code></pre></div>
+</div>
+<div id="summary-transmission-object" class="section level2">
+<h2>3. Summary transmission object</h2>
+<p>After creating transmission object, the <code>Summary_ob</code>
+function would provide the information of shared sites (the sites belong
+to shared sites should be sequenced both in donor and recipient.) for
+users. Example code:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>Summary_Sim <span class="ot">=</span> <span class="fu">Summary_ob</span>(Sim_ob)</span></code></pre></div>
+<p>The result:</p>
+<table class="table" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Donors
+</th>
+<th style="text-align:left;">
+Recipients
+</th>
+<th style="text-align:right;">
+number.of.shared.sites
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_0_All_r1
+</td>
+<td style="text-align:right;">
+13158
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_3_All_r1
+</td>
+<td style="text-align:right;">
+13158
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_6_All_r1
+</td>
+<td style="text-align:right;">
+13158
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_9_All_r1
+</td>
+<td style="text-align:right;">
+13158
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_12_All_r1
+</td>
+<td style="text-align:right;">
+13158
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="transmission-bottleneck-size-estimation" class="section level2">
+<h2>4. Transmission bottleneck size estimation</h2>
+<p>Finally, start to calculate transmission bottleneck size using
+transmission object.</p>
+<p><strong>4.1 Output of</strong>
+<code>Bottleneck_size_Calculation</code> <strong>function</strong></p>
+<p>Take calculation using Beta-binomial method approximate version as an
+example:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>BB_App_output <span class="ot">=</span> </span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="fu">Bottleneck_size_Calculation</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>           <span class="at">transmission_ob =</span> Sim_ob,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>           <span class="at">method =</span><span class="st">&quot;Beta_binomial_Approximate&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>           <span class="at">error_calling =</span> <span class="dv">0</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>           <span class="at">variant_calling =</span> <span class="fl">0.03</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>           <span class="at">Nbmin =</span> <span class="dv">1</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>           <span class="at">Nbmax =</span> <span class="dv">200</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>           <span class="at">donor_depth_threshold =</span> <span class="dv">0</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>           <span class="at">recipient_depth_threshold =</span> <span class="dv">0</span> </span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>           )</span></code></pre></div>
+<p>Output like:</p>
+<table class="table" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+donor
+</th>
+<th style="text-align:left;">
+recipient
+</th>
+<th style="text-align:right;">
+transmission_bottleneck_size
+</th>
+<th style="text-align:right;">
+CI_low
+</th>
+<th style="text-align:right;">
+CI_high
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_0_All_r1
+</td>
+<td style="text-align:right;">
+70
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:right;">
+70
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_3_All_r1
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+64
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_6_All_r1
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+39
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_9_All_r1
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:right;">
+23
+</td>
+<td style="text-align:right;">
+47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_12_All_r1
+</td>
+<td style="text-align:right;">
+47
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+67
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>4.2 Specify transmission pairs during estimation</strong></p>
+<p>This package provide a chance that if user need to specify some
+transmission pairs for estimation</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>subset_transmission_pairs <span class="ot">=</span> <span class="fu">read.table</span>(<span class="st">&quot;Samplesize50_r1_TansmissionPairs_specify.csv&quot;</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>                                       ,<span class="at">header =</span> <span class="cn">TRUE</span>,<span class="at">sep =</span> <span class="st">&quot;,&quot;</span>)</span></code></pre></div>
+<p><strong>4.3 Calculation</strong></p>
+<p><code>Bottleneck_size_Calculation</code> could create plot of
+likelihood curve for each transmission pairs in working directory.
+However, this argument just used for the methods using maximum
+likelihoods estimation, including <code>KL</code> method <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4339230/">(Emmett et al.,
+2015)</a>, <code>Presence-Absence</code> method <a href="https://journals.asm.org/doi/full/10.1128/jvi.00057-11">(Sacristán
+et al., 2011)</a>, <code>Binomial</code> method <a href="https://journals.asm.org/doi/10.1128/jvi.00171-17">(Leonard et
+al., 2017)</a>, <code>Beta_binomial_Approximate</code> method <a href="https://journals.asm.org/doi/10.1128/jvi.00171-17">(Leonard et
+al., 2017)</a> and <code>Beta_binomial_Exact</code> method <a href="https://journals.asm.org/doi/10.1128/jvi.00171-17">(Leonard et
+al., 2017)</a>. Using <code>show_table</code> and <code>plot</code>
+options could help to save output and obtain the plots of likelihood
+curve for each transmission pairs. (Note: if you want to access the
+original publication for each methods, you could click the
+<em>Publication link</em> after each methods)</p>
+<p>The program would create individual folder for each transmission pair
+to store the plot. Example code for creating plot:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a> BB_App_output_plot <span class="ot">=</span>  </span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>            <span class="fu">Bottleneck_size_Calculation</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>            <span class="at">transmission_ob =</span> Sim_ob,                          </span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>            <span class="at">method =</span> <span class="st">&quot;Beta_binomial_Approximate&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>            <span class="at">error_calling =</span> <span class="dv">0</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>            <span class="at">variant_calling =</span> <span class="fl">0.03</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>            <span class="at">Nbmin =</span> <span class="dv">1</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>            <span class="at">Nbmax =</span> <span class="dv">200</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>            <span class="at">donor_depth_threshold =</span> <span class="dv">0</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>            <span class="at">recipient_depth_threshold =</span> <span class="dv">0</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>            <span class="at">show_table =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>            <span class="at">plot=</span> <span class="cn">TRUE</span> </span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>            )</span></code></pre></div>
+<p>The plot of likelihood curve for one transmission pairs
+(donor_3000-50_3_All_r1) is below:</p>
+<p><img src="data:image/png;base64,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" width="457" /></p>
+<p><strong>4.4 Log file</strong></p>
+<p><code>Bottleneck_size_Calculation</code> could create log file
+containing number of variant used in calculation and number of variant
+filtered before calculation in working directory.</p>
+<p>Example code:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a> BB_App_output_log <span class="ot">=</span>  </span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>            <span class="fu">Bottleneck_size_Calculation</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>            <span class="at">transmission_ob =</span> Sim_ob,                          </span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>            <span class="at">method =</span> <span class="st">&quot;Beta_binomial_Approximate&quot;</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>            <span class="at">error_calling =</span> <span class="dv">0</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>            <span class="at">variant_calling =</span> <span class="fl">0.03</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>            <span class="at">Nbmin =</span> <span class="dv">1</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>            <span class="at">Nbmax =</span> <span class="dv">200</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>            <span class="at">donor_depth_threshold =</span> <span class="dv">0</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>            <span class="at">recipient_depth_threshold =</span> <span class="dv">0</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>            <span class="at">log=</span> <span class="cn">TRUE</span> </span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>            )</span></code></pre></div>
+<p>Output of <code>log</code> argument:</p>
+<table class="table" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+donor
+</th>
+<th style="text-align:left;">
+recipient
+</th>
+<th style="text-align:right;">
+donor_used
+</th>
+<th style="text-align:right;">
+donor_unused
+</th>
+<th style="text-align:right;">
+recipient_used
+</th>
+<th style="text-align:right;">
+recipient_unused
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_0_All_r1
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_3_All_r1
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_6_All_r1
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_9_All_r1
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+donor_3000
+</td>
+<td style="text-align:left;">
+50_12_All_r1
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+<td style="text-align:right;">
+193
+</td>
+<td style="text-align:right;">
+12965
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>4.5 Methods comparison</strong></p>
+<p>Given that one major purpose of the package is to compare calculation
+of bottleneck sizes across methods on the same data set, it would be
+nice to illustrate this. For example, compare all methods (except
+Wright-Fisher, see below) on a single pair, Sim_ob[1]:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>all_methods <span class="ot">&lt;-</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;KL&quot;</span>, <span class="st">&quot;Presence-Absence&quot;</span>, <span class="st">&quot;Binomial&quot;</span>, <span class="st">&quot;Beta_binomial_Approximate&quot;</span>, <span class="st">&quot;Beta_binomial_Exact&quot;</span>) </span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>compare_methods <span class="ot">&lt;-</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="fu">t</span>(<span class="fu">sapply</span>(all_methods, <span class="cf">function</span>(m){</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>    <span class="fu">Bottleneck_size_Calculation</span>(Sim_ob[<span class="dv">1</span>], <span class="at">method =</span> m)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  }))</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>compare_methods</span></code></pre></div>
+<p>An example using the realistic H1N1 dataset in the folder
+<code>test_dataset</code> :</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">library</span>(ViralBottleneck)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co"># Set working directory and make sure you have </span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#               transmission pairs file and related host files in this directory.</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">&quot;your working directory&quot;</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co"># Create transmission object.</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>transmission_pairs <span class="ot">=</span> <span class="fu">read.csv</span>(<span class="st">&quot;H1N1_transmission_pairs.csv&quot;</span>, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>ob_H1N1 <span class="ot">=</span> ViralBottleneck<span class="sc">::</span><span class="fu">CreateTransmissionObject</span>(transmission_pairs)</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co"># Applying all methods on one transmission pair.</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>all_methods <span class="ot">&lt;-</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a> <span class="fu">c</span>(<span class="st">&quot;KL&quot;</span>, <span class="st">&quot;Presence-Absence&quot;</span>, <span class="st">&quot;Binomial&quot;</span>, <span class="st">&quot;Beta_binomial_Approximate&quot;</span>, <span class="st">&quot;Beta_binomial_Exact&quot;</span>) </span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>compare_methods <span class="ot">&lt;-</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>  <span class="fu">t</span>(<span class="fu">sapply</span>(all_methods, <span class="cf">function</span>(m){</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>    <span class="fu">Bottleneck_size_Calculation</span>(ob_H1N1[<span class="dv">1</span>],</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>                                <span class="at">error_calling =</span> <span class="dv">0</span>,</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>                                <span class="at">variant_calling =</span> <span class="fl">0.03</span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>                                <span class="at">Nbmin =</span> <span class="dv">1</span>,<span class="at">Nbmax =</span> <span class="dv">400</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>                                <span class="at">donor_depth_threshold =</span> <span class="dv">0</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>                                <span class="at">recipient_depth_threshold =</span> <span class="dv">0</span> , </span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>                                <span class="at">method =</span> m)</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>  }))</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co"># Save results as csv file.</span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a></span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="fu">write.csv</span>(compare_methods,<span class="st">&quot;compare_methods.csv&quot;</span>)</span></code></pre></div>
+<p>result:</p>
+<table class="table" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+method
+</th>
+<th style="text-align:left;">
+donor
+</th>
+<th style="text-align:left;">
+recipient
+</th>
+<th style="text-align:right;">
+transmission_bottleneck_size
+</th>
+<th style="text-align:right;">
+CI_low
+</th>
+<th style="text-align:right;">
+CI_high
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+KL
+</td>
+<td style="text-align:left;">
+681_1_H1N1_donor
+</td>
+<td style="text-align:left;">
+681_1_H1N1_recipient
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+30
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Presence-Absence
+</td>
+<td style="text-align:left;">
+681_1_H1N1_donor
+</td>
+<td style="text-align:left;">
+681_1_H1N1_recipient
+</td>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+19
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Binomial
+</td>
+<td style="text-align:left;">
+681_1_H1N1_donor
+</td>
+<td style="text-align:left;">
+681_1_H1N1_recipient
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:right;">
+67
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Beta_binomial_Approximate
+</td>
+<td style="text-align:left;">
+681_1_H1N1_donor
+</td>
+<td style="text-align:left;">
+681_1_H1N1_recipient
+</td>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+78
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Beta_binomial_Exact
+</td>
+<td style="text-align:left;">
+681_1_H1N1_donor
+</td>
+<td style="text-align:left;">
+681_1_H1N1_recipient
+</td>
+<td style="text-align:right;">
+49
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+78
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
