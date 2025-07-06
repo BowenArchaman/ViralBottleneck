@@ -50,7 +50,7 @@ find_variant_in_recipient <- function(row){
 }
 
 Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_calling){
-  mix=create_max_f(shared_table,tidy_table)
+  mix=create_max_f(shared_table,tidy_shared_table)
   donor=mix[,1:4]
   sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
   sort=sort[sort[,2]>variant_calling,]
@@ -626,7 +626,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     }
     return(Nb)
   }
-  
+
   if(method=="Beta_binomial_Exact"){
     matrix_exact=Convert_to_Exact_method_matrix(table)
     v=Range_function_Exact(table = matrix_exact,variant_calling=variant_calling,Nbmin = Nbmin,Nbmax = Nbmax)
