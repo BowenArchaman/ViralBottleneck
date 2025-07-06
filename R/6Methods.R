@@ -745,7 +745,7 @@ Bottleneck_size_Calculation <- function(transmission_ob,method="Beta_binomial_Ap
   }
   id_number=paste0(donor_depth_threshold,recipient_depth_threshold,error_filtering)
   log_dir=paste0(substitute(transmission_ob),"_",method,id_number,"_log")
-  log_table=log_main_function(transmission_ob,donor_threshold = donor_depth_threshold,recipient_threshold = recipient_depth_threshold,NonSyn_or_Syn=NonSyn_or_Syn,error_calling=error_filtering)
+  log_table=log_main_function(transmission_ob,donor_threshold = donor_depth_threshold,recipient_threshold = recipient_depth_threshold,NonSyn_or_Syn=NonSyn_or_Syn,error_calling=error_filtering,variant_calling=variant_calling)
   if(log==TRUE && method != "Wright-Fisher"){
     check_file(paste0(log_dir,".csv"))
     write.csv(log_table,paste0(log_dir,".csv"))
