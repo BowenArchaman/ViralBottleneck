@@ -600,7 +600,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   }
   
   if(method == "KL"){
-    KL_tidy_table=Create_variant_identificatin_forKL(shared_table, tidy_table)
+    KL_tidy_table=Create_variant_identificatin_forKL(shared_table, tidy_table,variant_calling)
     v=Range_function_KL(KL_tidy_table,Nbmin,Nbmax)
     res=find_confidence_interval(v,Nbmin=Nbmin)
     Nb=list(res[[3]],res[[1]],res[[2]])
