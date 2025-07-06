@@ -641,9 +641,8 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     return(Nb)
   }
   if(method=="Presence-Absence"){
-    table_PA=Prepared_matrix_for_methods_PA(shared_table,tidy_table,error_calling)
-    matrix=Convert_to_Approxmate_method_matrix(table_PA)
-    v=Range_function_preOrabsent(variant_calling = variant_calling,table = matrix,Nbmin = Nbmin,Nbmax = Nbmax)
+    matrix_PA=Convert_to_Approxmate_method_matrix(table)
+    v=Range_function_preOrabsent(variant_calling = variant_calling,table = matrix_PA,Nbmin = Nbmin,Nbmax = Nbmax)
     res=find_confidence_interval(v,Nbmin=Nbmin)
     Nb=list(res[[3]],res[[1]],res[[2]])
     if(plot==TRUE){
