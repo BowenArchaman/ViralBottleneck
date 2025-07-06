@@ -20,7 +20,7 @@ Before_calculation_table<-function(one_pair,donor_depth_threshold, recipient_dep
 
 
 create_max_f <- function(shared_site,tidy_table){
-  mix=merge(tidy_table,shared_table,by.x=0,by.y=0)
+  mix=merge(tidy_table,shared_site,by.x=0,by.y=0)
   row.names(mix)=mix[,1]
   mix=mix[,-1]
   donor=mix[,1:4]
