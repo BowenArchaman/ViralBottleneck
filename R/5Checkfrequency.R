@@ -53,7 +53,7 @@ tidy_up_sample_table <- function(sample_table,threshold){
   sample_table$sum=rowSums(sample_table)
   sample_table=sample_table[sample_table[,5]>threshold,]
   for(i in 1:4){
-    sample_table[,i][sample_table[,i]==0]=0.000001
+    sample_table[,i][sample_table[,i]==0]=0
   }
   return(sample_table)
 }
@@ -61,7 +61,7 @@ tidy_up_sample_table <- function(sample_table,threshold){
 create_frequency_table <- function(sample_sum_table,error_calling){
   for(i in 1:4){
     sample_sum_table[,i]=sample_sum_table[,i]/sample_sum_table[,5]
-    sample_sum_table[,i][sample_sum_table[,i]<error_calling]=0.000001
+    sample_sum_table[,i][sample_sum_table[,i]<error_calling]=0
   }
   return(sample_sum_table)
 }

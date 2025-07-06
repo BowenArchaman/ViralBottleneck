@@ -18,46 +18,15 @@ Before_calculation_table<-function(one_pair,donor_depth_threshold, recipient_dep
   return(tidy_table)
 }
 
-######################################################################################################
-KL_shared_table <- function(shared_site_table){
-  sum=0
-  for(i in 1:4){
-    q=shared_site_table[,i]
-    p=shared_site_table[,i+4]
-    ratio=p/q
-    add=p*log2(ratio)
-    sum=sum+add
-  }
-  sum=round(sum,3)
-  return(sum)
-}
 
-Effective_bottleneck_size_KL <- function(k,shared_site_table){
-  n_s=nrow(shared_site_table)
-  KL=sum(KL_shared_table(shared_site_table))
-  one_val_likelihood=-(k*KL)+(n_s/2)*log(k)
-  return(one_val_likelihood)
-}
-
-Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
-  likelihood_vector=pblapply(Nbmin:Nbmax,Effective_bottleneck_size_KL,shared_site_table=shared_site_table)
-  print(paste(nrow(shared_site_table),"sites were used in calculation"))
-  final_likelihood_vector=data.frame(likelihood_vector)
-  name_v=Nbmin:Nbmax
-  class(name_v)="character"
-  names(final_likelihood_vector)=name_v
-  return(final_likelihood_vector)
-}
-
-#effective population size calculation
 create_max_f <- function(shared_site,tidy_table){
-  mix=merge(tidy_table,shared_site,by.x=0,by.y=0)
+  mix=merge(tidy_table,shared_table,by.x=0,by.y=0)
   row.names(mix)=mix[,1]
   mix=mix[,-1]
-  mix=mix[,-(5:8)]
   donor=mix[,1:4]
   donor$d_max=apply(donor,1,max)
-  max_table=cbind.data.frame(donor,mix[,5:12])
+  max_table=cbind.data.frame(donor,mix[,5:16])
+  max_table=max_table[,-(10:13)]
   return(max_table)
 }
 
@@ -80,34 +49,52 @@ find_variant_in_recipient <- function(row){
   return(variant)
 }
 
-Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table){
-  mix=create_max_f(shared_table,tidy_shared_table)
-
-  donor=mix[,6:9]
+Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_calling){
+  mix=create_max_f(shared_table,tidy_table)
+  donor=mix[,1:4]
   sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-  sort=sort[sort[,2]>0,]
+  sort=sort[sort[,2]>variant_calling,]
   sort=sort[sort[,2]!=sort[,3],]#check the same variants
-  sort=sort[sort[,3]<=0.000001,]#filter non-biallelic
+  sort=sort[sort[,3]<=variant_calling,]#filter non-biallelic
   res=merge(mix,sort,by.x=0,by.y=0)
   row.names(res)=res[,1]
-  res=res[,7:18]
-  res$v5=0
-  col11=apply(res,1,find_dominant_not_mutated)
-  res[,11]=col11
-  col12=apply(res,1,find_dominant_in_recipient)
-  res[,12]=col12
-  col13=apply(res,1,find_variant_in_recipient)
-  res[,13]=col13
-  res=res[,-11]
-  final_matrix=res[,9:12]
-  return(final_matrix)
+  res=res[,2:18]
+  res[,"V3"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_dominant_in_recipient)
+  res[,"V4"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_variant_in_recipient)
+  res$V5=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_dominant_in_recipient)
+  res$V6=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_variant_in_recipient)
+  return(res)
 }
 
-Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table){
+
+
+#filter the variants which would not be distinguished from errors.
+Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,variant_calling){
+  res=Create_matrix_for_biallelic(shared_sites_table,tidy_sites_table,variant_calling)
+  res_info=res[,14:19]
+  names(res_info)=c("do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads")
+  prepared_matrix=cbind.data.frame(res[,1:13],res_info)
+  return(prepared_matrix)
+}
+
+
+Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
+  App_matrix=cbind.data.frame(prepared_matrix[,15],prepared_matrix[,17])
+  return(App_matrix)
+}
+
+Convert_to_Exact_method_matrix<- function(prepared_matrix){
+  matrix=cbind.data.frame(prepared_matrix[,15],prepared_matrix[,18:19])
+  matrix$sum=rowSums(matrix[,2:3])
+  Exact_matix=cbind.data.frame(matrix[,1],matrix[,3:4])
+  return(Exact_matix)
+}
+
+Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
-  donor=mix[,6:9]
+  donor=mix[,1:4]
   sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-  sort=sort[sort[,2]>0,] #filtered the no-variation sites
+  sort=sort[sort[,2]>variant_calling,] #filtered the no-variation sites
   var_sites=merge(sort[,1:2],tidy_shared_table,by="row.names")
   row.names(var_sites)=var_sites[,1]
   var_sites=var_sites[,-(1:3)]
@@ -152,95 +139,63 @@ find_fixed_variant_exact<- function(table,variant_calling){
 }
 
 
-Create_matrix_for_biallelic_PA <- function(shared_table,tidy_shared_table){
-  mix=create_max_f(shared_table,tidy_shared_table)
-
-  donor=mix[,6:9]
-  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-  sort=sort[sort[,2]>0,]
-  sort=sort[sort[,2]!=sort[,3],]#check the same variants
-  sort=sort[sort[,3]<=0.000001,]#filter non-biallelic
-  res=merge(mix,sort,by.x=0,by.y=0)
-  row.names(res)=res[,1]
-  res=res[,7:18]
-  res$v5=0
-  col11=apply(res,1,find_dominant_not_mutated)
-  res[,11]=col11
-  col12=apply(res,1,find_dominant_in_recipient)
-  res[,12]=col12
-  col13=apply(res,1,find_variant_in_recipient)
-  res[,13]=col13
-  #tidy up final matrix
-  res=res[,-11]
-  final_matrix=res[,9:12]
-  return(final_matrix)
-}
-
-
-Convert_to_proportion_sample <- function(sample_sum_table){
-  for(i in 1:2){
-    sample_sum_table[,i]=sample_sum_table[,i]/sample_sum_table[,3]
+find_confidence_interval <- function(final_vector,Nbmin){
+  final_vector=as.numeric(final_vector[1,])
+  l_OK = is.finite(final_vector)
+  if(FALSE %in% l_OK){
+    lowest_index=Nbmin
   }
-  sample_sum_table=sample_sum_table[,-3]
-  return(sample_sum_table)
+  else{lowest_index=Nbmin-1}
+  final_vector=final_vector[l_OK]
+  max_value=max(final_vector)
+  max_index=which.max(final_vector)+lowest_index
+  height=max_value- qchisq(0.95,df=1)/2
+  CI=final_vector[final_vector>=height]
+  CI_low=which(final_vector==CI[1]) + lowest_index
+  CI_low=min(CI_low)
+  CI_high=which(final_vector==CI[length(CI)])+lowest_index
+  CI_high=max(CI_high)
+  if(is.na(CI[1])){
+    CI_low=max_index
+    CI_high=max_index+1
+  }
+  CI_list=list(CI_low,CI_high,max_index)
+  return(CI_list)
+}
+######################################method 
+#KL 
+KL_shared_table <- function(shared_site_table){
+  sum=0
+  for(i in 1:4){
+    q=shared_site_table[,i]
+    p=shared_site_table[,i+4]
+    p[p == 0] <- 1e-9
+    q[q == 0] <- 1e-9
+    ratio=p/q
+    add=p*log2(ratio)
+    sum=sum+add
+  }
+  return(sum)
 }
 
-#filter the variants which would not be distinguished from errors.
-Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,error_threshold){
-  prepared_matrix=Create_matrix_for_biallelic(shared_sites_table,tidy_sites_table)
-  donor=prepared_matrix[,1:2]
-  recipient=prepared_matrix[,3:4]
-  recipient_counts=prepared_matrix[,3:4]
-  donor$sum=rowSums(donor)
-  recipient$sum=rowSums(recipient)
-  donor=Convert_to_proportion_sample(donor)
-  recipient=Convert_to_proportion_sample(recipient)
-  proportion_matrix=cbind.data.frame(donor,recipient)
-  proportion_matrix=cbind.data.frame(proportion_matrix,recipient_counts)
-  proportion_matrix=proportion_matrix[proportion_matrix[,2]>error_threshold,]
-  return(proportion_matrix)
+Effective_bottleneck_size_KL <- function(k,shared_site_table){
+  n_s=nrow(shared_site_table)
+  KL=sum(KL_shared_table(shared_site_table))
+  one_val_likelihood=-(k*KL)+(n_s/2)*log(k)
+  return(one_val_likelihood)
 }
 
-Prepared_matrix_for_methods_PA <- function(shared_sites_table,tidy_sites_table,error_threshold){
-  prepared_matrix=Create_matrix_for_biallelic_PA(shared_sites_table,tidy_sites_table)
-  donor=prepared_matrix[,1:2]
-  recipient=prepared_matrix[,3:4]
-  recipient_counts=prepared_matrix[,3:4]
-  donor$sum=rowSums(donor)
-  recipient$sum=rowSums(recipient)
-  donor=Convert_to_proportion_sample(donor)
-  recipient=Convert_to_proportion_sample(recipient)
-  proportion_matrix=cbind.data.frame(donor,recipient)
-  proportion_matrix=cbind.data.frame(proportion_matrix,recipient_counts)
-  proportion_matrix=proportion_matrix[proportion_matrix[,2]>error_threshold,]
-  return(proportion_matrix)
+Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
+  likelihood_vector=pblapply(Nbmin:Nbmax,Effective_bottleneck_size_KL,shared_site_table=shared_site_table)
+  print(paste(nrow(shared_site_table),"sites were used in calculation"))
+  final_likelihood_vector=data.frame(likelihood_vector)
+  name_v=Nbmin:Nbmax
+  class(name_v)="character"
+  names(final_likelihood_vector)=name_v
+  return(final_likelihood_vector)
 }
 
-Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
-  proportion_matrix=prepared_matrix[,-6]
-  proportion_matrix=proportion_matrix[,-5]
-  proportion_matrix=proportion_matrix[,-3]
-  proportion_matrix=proportion_matrix[,-1]
-  return(proportion_matrix)
-}
-
-Convert_to_Exact_method_matrix <- function(prepared_matrix){
-  recipient_counts=prepared_matrix[,5:6]
-  sum=rowSums(recipient_counts)
-  prepared_matrix=prepared_matrix[,-5]
-  prepared_matrix=prepared_matrix[,-4]
-  prepared_matrix=prepared_matrix[,-3]
-  prepared_matrix=prepared_matrix[,-1]
-  prepared_matrix$sum=sum
-  return(prepared_matrix)
-}
-
-#After table for Approximate
-filtered_absent_dominant_variant<-function(prepared_matrix,error_calling){
-  prepared_matrix=prepared_matrix[prepared_matrix[,1]>error_calling,]
-  return(prepared_matrix)
-}
-############################################################################################
+#Beta-binomial Approximate verison
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
   table=find_fixed_variant_app(table,variant_calling)
   table=subset(table,table[,1]>=variant_calling)
@@ -279,6 +234,7 @@ Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
   return(final_likelihood_vector)
 }
 
+#Beta-binomial exact verison
 one_Nbval_function_Exact<- function(k,table,variant_calling){
   table=find_fixed_variant_exact(table,variant_calling)
   table=subset(table,table[,1]>=variant_calling)
@@ -288,16 +244,16 @@ one_Nbval_function_Exact<- function(k,table,variant_calling){
   likelihood_vector_absent=numeric(nrow(absent))
   if(nrow(present) != 0){
     for(i in 0:k){
-    alpha=i
-    Beta=(k-i)
-    if(alpha==0){alpha=10^-9}
-    if(Beta==0){Beta=10^-9}
-    m=alpha / (alpha+Beta)
-    s=(alpha+Beta)
-    pbinVd1=dbinom(i, size=k, prob=present[,1])
-    add1=dbetabinom(present[,2],present[,3], m, s, log = FALSE)*pbinVd1
-    likelihood_vector_present=likelihood_vector_present+add1
-  }
+      alpha=i
+      Beta=(k-i)
+      if(alpha==0){alpha=10^-9}
+      if(Beta==0){Beta=10^-9}
+      m=alpha / (alpha+Beta)
+      s=(alpha+Beta)
+      pbinVd1=dbinom(i, size=k, prob=present[,1])
+      add1=dbetabinom(present[,2],present[,3], m, s, log = FALSE)*pbinVd1
+      likelihood_vector_present=likelihood_vector_present+add1
+    }
   }
   if(nrow(absent) != 0){
     for(j in 0:k){
@@ -326,31 +282,7 @@ Range_function_Exact<-function(variant_calling,table,Nbmin,Nbmax){
   return(final_likelihood_vector)
 }
 
-find_confidence_interval <- function(final_vector,Nbmin){
-  final_vector=as.numeric(final_vector[1,])
-  l_OK = is.finite(final_vector)
-  if(FALSE %in% l_OK){
-    lowest_index=Nbmin
-  }
-  else{lowest_index=Nbmin-1}
-  final_vector=final_vector[l_OK]
-  max_value=max(final_vector)
-  max_index=which.max(final_vector)+lowest_index
-  height=max_value- qchisq(0.95,df=1)/2
-  CI=final_vector[final_vector>=height]
-  CI_low=which(final_vector==CI[1]) + lowest_index
-  CI_low=min(CI_low)
-  CI_high=which(final_vector==CI[length(CI)])+lowest_index
-  CI_high=max(CI_high)
-  if(is.na(CI[1])){
-    CI_low=max_index
-    CI_high=max_index+1
-  }
-  CI_list=list(CI_low,CI_high,max_index)
-  return(CI_list)
-}
-
-#present/absent method
+#Presence-Absence
 one_Nbval_function_preOrabsent <- function(k,table,variant_calling){
   present=table[table[,2]>=variant_calling,]
   absent=table[table[,2]<variant_calling,]
@@ -404,7 +336,7 @@ Range_function_binomial <- function(variant_calling,table,Nbmin,Nbmax){
 }
 
 ################################################################################################################
-#Wrighter-Fisher model
+#Wrighter-Fisher method
 Get_variant_ids_from_one_pair <- function(one_ob,donor_depth_threshold, recipient_depth_threshold,error_calling,NonSyn_or_Syn){
   s_t=Create_shared_variant_site_table(one_ob,NonSyn_or_Syn = NonSyn_or_Syn)
   t_t=tidy_up_shared_sites_table(s_t,donor_depth_threshold, recipient_depth_threshold,error_calling)
@@ -632,11 +564,11 @@ check_file <- function(name_file){
   }
 }
 
-log_one_pair<- function(one_ob,donor_threshold,recipient_threshold,NonSyn_or_Syn,error_calling){
+log_one_pair<- function(one_ob,donor_threshold,recipient_threshold,NonSyn_or_Syn,error_calling,variant_calling){
   transmisson_id = one_ob@transmission_pair_ID
   shared_table=Create_shared_variant_site_table(one_ob,NonSyn_or_Syn=NonSyn_or_Syn)
   tidy_table = Before_calculation_table(one_ob,donor_depth_threshold = donor_threshold, recipient_depth_threshold=recipient_threshold,error_calling=error_calling,NonSyn_or_Syn=NonSyn_or_Syn)
-  table=Prepared_matrix_for_methods(shared_table,tidy_table,error_calling)
+  table=Prepared_matrix_for_methods(shared_table,tidy_table,variant_calling)
   donor_used=nrow(table)
   donor_unused=nrow(one_ob@Donor@variant_site_table)-nrow(table)
   recipient_used=nrow(table)
@@ -646,8 +578,8 @@ log_one_pair<- function(one_ob,donor_threshold,recipient_threshold,NonSyn_or_Syn
   return(row)
 }
 
-log_main_function<-function(ob,donor_threshold,recipient_threshold,NonSyn_or_Syn,error_calling){
-  main_t=lapply(ob,log_one_pair,donor_threshold=donor_threshold,recipient_threshold=recipient_threshold,NonSyn_or_Syn=NonSyn_or_Syn,error_calling=error_calling)
+log_main_function<-function(ob,donor_threshold,recipient_threshold,NonSyn_or_Syn,error_calling,variant_calling){
+  main_t=lapply(ob,log_one_pair,donor_threshold=donor_threshold,recipient_threshold=recipient_threshold,NonSyn_or_Syn=NonSyn_or_Syn,error_calling=error_calling,variant_calling=variant_calling)
   main_t=do.call(rbind.data.frame,main_t)
   names(main_t)=c("donor","recipient","donor_used","donor_unused","recipient_used","recipient_unused")
   return(main_t)
@@ -662,7 +594,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   transmisson_id = one_pair@transmission_pair_ID
   shared_table=Create_shared_variant_site_table(one_pair,NonSyn_or_Syn=NonSyn_or_Syn)
   tidy_table = Before_calculation_table(one_pair,donor_depth_threshold = donor_depth_threshold, recipient_depth_threshold=recipient_depth_threshold,error_calling=error_calling,NonSyn_or_Syn=NonSyn_or_Syn)
-  table=Prepared_matrix_for_methods(shared_table,tidy_table,error_calling)
+  table=Prepared_matrix_for_methods(shared_table,tidy_table,variant_calling)
   if(log==TRUE){
    write.csv(table,paste0(transmisson_id,"_log.csv"),row.names = FALSE) 
   }
@@ -680,6 +612,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     }
     return(Nb)
   }
+
   if(method=="Beta_binomial_Approximate"){
     matrix_app=Convert_to_Approxmate_method_matrix(table)
     v=Range_function_Approximate(variant_calling=variant_calling ,table=matrix_app,Nbmin = Nbmin,Nbmax=Nbmax)
@@ -693,6 +626,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     }
     return(Nb)
   }
+  
   if(method=="Beta_binomial_Exact"){
     matrix_exact=Convert_to_Exact_method_matrix(table)
     v=Range_function_Exact(table = matrix_exact,variant_calling=variant_calling,Nbmin = Nbmin,Nbmax = Nbmax)
@@ -749,7 +683,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
 #' @param transmission_pairs is a dataframe which is the subset of the transmission pairs table during the object creation.
 #' @param donor_depth_threshold is a integer to filter variants in donor with the lower sequencing coverage
 #' @param recipient_depth_threshold is a integer to filter variants in recipient with the lower sequencing coverage
-#' @param error_calling is a numeric and filter. The proportion of the variant sites lower than error calling means the variant is difficult to distinguish from PCR errors. Then, the sites with lower proportion than error calling would be filtered.
+#' @param error_filtering is a numeric and filter. The proportion of the variant sites lower than error calling means the variant is difficult to distinguish from PCR errors. Then, the sites with lower proportion than error calling would be filtered.
 #' @param log is a logical value to show the log or not. The log would be stored in an individual folder.
 #' @param variant_calling is a parameter used for `Presence-absence`method, `Binomial` method, `Beta_binomial` method to determine the variants is absent in recipient or not. Proportion of variant site lower than variant calling means this site is absent in recipient.
 #' @param Nbmin is a integer representing the minimum number in likelihood range.
@@ -800,7 +734,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
 #'KL_table = Bottleneck_size_calculation(transmission_object, method="KL",log=TRUE)
 
 #' @export
-Bottleneck_size_Calculation <- function(transmission_ob,method="KL",plot=FALSE,show_table=FALSE,transmission_pairs=NULL,donor_depth_threshold=500, recipient_depth_threshold=500,error_calling=0.01,log=FALSE,variant_calling=0.03,Nbmin=1,Nbmax=1000,NonSyn_or_Syn="All"){
+Bottleneck_size_Calculation <- function(transmission_ob,method="Beta_binomial_Approximate",plot=FALSE,show_table=FALSE,transmission_pairs=NULL,donor_depth_threshold=10, recipient_depth_threshold=10,error_filtering=0.001,log=FALSE,variant_calling=0.03,Nbmin=1,Nbmax=1000,NonSyn_or_Syn="All"){
   method_list=c("KL","Presence-Absence","Binomial","Beta_binomial_Approximate","Beta_binomial_Exact","Wright-Fisher")
   if(method%in%method_list==FALSE){stop("Please choose valid methods (KL,Presence-Absence,Binomial,Beta_binomial_Approximate,Beta_binomial_Exact,Wright-Fisher)!")}
   if(is.null(transmission_pairs)){
@@ -809,16 +743,16 @@ Bottleneck_size_Calculation <- function(transmission_ob,method="KL",plot=FALSE,s
   else{
     ob=get_from_in_object(transmission_ob = transmission_ob,transmission_pairs = transmission_pairs)
   }
-  id_number=paste0(donor_depth_threshold,recipient_depth_threshold,error_calling)
+  id_number=paste0(donor_depth_threshold,recipient_depth_threshold,error_filtering)
   log_dir=paste0(substitute(transmission_ob),"_",method,id_number,"_log")
-  log_table=log_main_function(transmission_ob,donor_threshold = donor_depth_threshold,recipient_threshold = recipient_depth_threshold,NonSyn_or_Syn=NonSyn_or_Syn,error_calling=error_calling)
+  log_table=log_main_function(transmission_ob,donor_threshold = donor_depth_threshold,recipient_threshold = recipient_depth_threshold,NonSyn_or_Syn=NonSyn_or_Syn,error_calling=error_filtering)
   if(log==TRUE && method != "Wright-Fisher"){
     check_file(paste0(log_dir,".csv"))
     write.csv(log_table,paste0(log_dir,".csv"))
     setwd('..')
   }
   if(method != "Wright-Fisher"){
-    N_bs=lapply(ob, one_transmission_pair_process,method=method,donor_depth_threshold=donor_depth_threshold, recipient_depth_threshold=recipient_depth_threshold,error_calling=error_calling,plot=plot,log=log,log_dir_name=log_dir,variant_calling=variant_calling,Nbmin=Nbmin,Nbmax=Nbmax,NonSyn_or_Syn=NonSyn_or_Syn)
+    N_bs=lapply(ob, one_transmission_pair_process,method=method,donor_depth_threshold=donor_depth_threshold, recipient_depth_threshold=recipient_depth_threshold,error_calling=error_filtering,plot=plot,log=log,log_dir_name=log_dir,variant_calling=variant_calling,Nbmin=Nbmin,Nbmax=Nbmax,NonSyn_or_Syn=NonSyn_or_Syn)
     transmission_info=c("transmission pairs","transmission_bottleneck_size")
     N_bs=do.call(rbind.data.frame,N_bs)
     N_table=cbind.data.frame(get_transmission_pairs(ob),N_bs)
@@ -837,7 +771,7 @@ Bottleneck_size_Calculation <- function(transmission_ob,method="KL",plot=FALSE,s
     return(N_table)
   }
   if(method == "Wright-Fisher"){
-    N_table=Collect_values_in_table_for_wf(transmission_ob,donor_depth_threshold = donor_depth_threshold,recipient_depth_threshold = recipient_depth_threshold,error_calling = error_calling,NonSyn_or_Syn=NonSyn_or_Syn)
+    N_table=Collect_values_in_table_for_wf(transmission_ob,donor_depth_threshold = donor_depth_threshold,recipient_depth_threshold = recipient_depth_threshold,error_calling = error_filtering,NonSyn_or_Syn=NonSyn_or_Syn)
     names(N_table)=c("segments","position","P_mean","Q_mean","var","Nb","P_add_eps","Q_minus_eps","var_add_eps","Nb_add_eps","P_minus_eps","Q_add_eps","var_minus_eps","Nb_minus_eps")
     if(show_table==TRUE){
       name=paste0(substitute(transmission_ob),"_",method,".csv")
