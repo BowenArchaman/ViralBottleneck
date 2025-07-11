@@ -93,6 +93,7 @@ Convert_to_Exact_method_matrix<- function(prepared_matrix){
 Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
   donor=mix[,1:4]
+  #if error filtering is delete it should be delete
   for(i in 1:8){
     tidy_shared_table[,i][tidy_shared_table[,i]<variant_calling]=0
   }
