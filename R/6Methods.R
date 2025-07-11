@@ -93,6 +93,9 @@ Convert_to_Exact_method_matrix<- function(prepared_matrix){
 Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
   donor=mix[,1:4]
+  for(i in 1:8){
+    tidy_shared_table[,i][tidy_shared_table[,i]<variant_calling]=0
+  }
   sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
   sort=sort[sort[,2]>variant_calling,] #filtered the no-variation sites
   var_sites=merge(sort[,1:2],tidy_shared_table,by="row.names")
