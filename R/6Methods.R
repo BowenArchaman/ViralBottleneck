@@ -680,15 +680,15 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
 #' Calculate transmission bottleneck size
 #'
 #' @param transmission_ob is a transmission object created by,`CreateTransmissionObject`.
-#' @param method is characters containing `KL` method, `Presence-Absence` method, `Binomial` method, `Beta_binomial_Approximate` method, `Beta_binomial_Exact` method and `Wright-Fisher` method
+#' @param method is characters containing `KL` method (Emmett et al., 2015), `Presence-Absence` method (Sacristán et al., 2003), `Binomial` method (Sobel Leonard et al., 2017), `Beta_binomial_Approximate` method (Sobel Leonard et al., 2017), `Beta_binomial_Exact` method (Sobel Leonard et al., 2017)and `Wright-Fisher` method(Poon et al., 2016)
 #' @param plot is a logical value to determine plot the likelihood or not. Each plot would be stored in an individual folder named by transmission id.
 #' @param show_table is a logical value to determine output a result table as `csv` format.
 #' @param transmission_pairs is a dataframe which is the subset of the transmission pairs table during the object creation.
 #' @param donor_depth_threshold is a integer to filter variants in donor with the lower sequencing coverage
 #' @param recipient_depth_threshold is a integer to filter variants in recipient with the lower sequencing coverage
-#' @param error_filtering is a numeric and filter. The proportion of the variant sites lower than error calling means the variant is difficult to distinguish from PCR errors. Then, the sites with lower proportion than error calling would be filtered.
+#' @param error_filtering is a numeric and filter. The proportion of the variants lower than error calling means the variant is difficult to distinguish from errors. After using that, the variants with values below this threshold would be zero.
 #' @param log is a logical value to show the log or not. The log would be stored in an individual folder.
-#' @param variant_calling is a parameter used for `Presence-absence`method, `Binomial` method, `Beta_binomial` method to determine the variants is absent in recipient or not. Proportion of variant site lower than variant calling means this site is absent in recipient.
+#' @param variant_calling is a threshold used for calling variant. The variants greater than this thrshould would be trusted.
 #' @param Nbmin is a integer representing the minimum number in likelihood range.
 #' @param Nbmax is a integer representing the maximum number in likelihood range.
 #' @param NonSyn_or_Syn is a filter to keep the variant sites which meet the requirements. If user need the mutation of variant sites are synonymous mutation, then `NonSyn_or_Syn="Synonymous"`. If user need the mutation of variant sites are non-synonymous mutation, then `NonSyn_or_Syn="Non-Synonymous"`. The default is "All"
