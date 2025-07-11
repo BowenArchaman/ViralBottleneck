@@ -711,31 +711,29 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
 #'BB_Exact_table = Bottleneck_size_calculation(transmission_object, method="Beta_binomial_Exact")
 #' #use wright-fisher method
 #'BB_WF_table = Bottleneck_size_calculation(transmission_object, method="Wright-Fisher")
-#'Take KL method as example to show other arguments
-#'#Execute depth thresholds argument. The default of depth thresholds are 500.
-#'KL_table = Bottleneck_size_calculation(transmission_object, method="KL"
-#'                                   ,donor_depth_threshold=1000, recipient_depth_threshold=1000)
-#'#Execute error calling argument. The default of error calling threshold is 0.01.
-#'KL_table = Bottleneck_size_calculation(transmission_object, method="KL",error_calling=0.02)
-#'#Execute range argument. The default of Nbmin is 1 and Nbmax=1000. They are used for
-#'#                                                    methods excluding `Wright-Fisher` method.
-#'KL_table = Bottleneck_size_calculation(transmission_object, method="KL",Nbmin=50,Nbmax=100)
-#'#Execute variant calling argument. The argument only use
-#'#                      for `Presence-Absence`method, `Binomial` method, `Beta_binomial` method.
-#'BB_Exact_table = Bottleneck_size_calculation(transmission_object,
-#'                                                method="Beta_binomial_Exact",variant_calling=0.02)
-#'#if user have the subset of the transmission pairs, `subset_transmissionpairs`which is the
-#'#                                                same dataframe as the input for `CreateTransmissionObject`.
-#'KL_table = Bottleneck_size_calculation(transmission_object, method="KL"
-#'                                                          ,transmission_pairs=subset_transmissionpairs)
-#'#If user need to output likelihood curve of transmission pairs in working directory,
-#'#                                                            excluding `Wright-Fisher` method.
-#'KL_table = Bottleneck_size_calculation(transmission_object, method="KL",plot=TRUE)
-#'#If user need to output table of transmission pairs in working directory.
-#'KL_table = Bottleneck_size_calculation(transmission_object, method="KL",show_table=TRUE)
-#'#If user need to output log of transmission pairs in working directory.
-#'KL_table = Bottleneck_size_calculation(transmission_object, method="KL",log=TRUE)
 
+
+#' @references
+#' Emmett, K. J., Lee, A., Khiabanian, H., & Rabadan, R. (2015) 
+#' High-resolution genomic surveillance of 2014 Ebolavirus using shared 
+#' subclonal variants. \emph{PLOS Currents Outbreaks} \bold{7}, 
+#' ecurrents.outbreaks.\cr 
+#' Sacristán, S., Malpica, J. M., Fraile, A., & García-Arenal, F. (2003)
+#' Estimation of population bottlenecks during systemic movement of
+#' tobacco mosaic virus in tobacco plants. \emph{Journal of Virology}
+#' \bold{77}(18), 9906–9911.\cr
+#' Poon, L. L. M., Song, T., Rosenfeld, R., Lin, X., Rogers, M. B.,
+#' Zhou, B., Sebra, R., Halpin, R., Guan, Y., Twaddle, A., DePasse, J.,
+#' Stockwell, T., Wentworth, D., Holmes, E., Greenbaum, B., Peiris, J. S. M.,
+#' Cowling, B. J., & Ghedin, E. (2016) Quantifying influenza virus
+#' diversity and transmission in humans. \emph{Nature Genetics}
+#' \bold{48}(2), 195--200.\cr
+#' Sobel Leonard, A., Weissman, D. B., Greenbaum, B., Ghedin, E.,
+#' & Koelle, K. (2017) Transmission bottleneck size estimation from
+#' pathogen deep-sequencing data, with an application to human
+#' influenza A virus. \emph{Journal of Virology} \bold{91}(14),
+#' e00171-17.\cr
+#' 
 #' @export
 Bottleneck_size_Calculation <- function(transmission_ob,method="Beta_binomial_Approximate",plot=FALSE,show_table=FALSE,transmission_pairs=NULL,donor_depth_threshold=10, recipient_depth_threshold=10,error_filtering=0.001,log=FALSE,variant_calling=0.03,Nbmin=1,Nbmax=1000,NonSyn_or_Syn="All"){
   method_list=c("KL","Presence-Absence","Binomial","Beta_binomial_Approximate","Beta_binomial_Exact","Wright-Fisher")
