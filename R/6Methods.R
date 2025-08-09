@@ -735,7 +735,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
 #' e00171-17.\cr
 #' 
 #' @export
-Bottleneck_size_Calculation <- function(transmission_ob,method="Beta_binomial_Approximate",plot=FALSE,show_table=FALSE,transmission_pairs=NULL,donor_depth_threshold=10, recipient_depth_threshold=10,error_filtering=0.001,log=FALSE,variant_calling=0.03,Nbmin=1,Nbmax=1000,NonSyn_or_Syn="All"){
+Bottleneck_size_Calculation <- function(transmission_ob,method,plot=FALSE,show_table=FALSE,transmission_pairs=NULL,donor_depth_threshold=10, recipient_depth_threshold=10,error_filtering=0,log=FALSE,variant_calling=0.03,Nbmin=1,Nbmax=1000,NonSyn_or_Syn="All"){
   method_list=c("KL","Presence-Absence","Binomial","Beta_binomial_Approximate","Beta_binomial_Exact","Wright-Fisher")
   if(method%in%method_list==FALSE){stop("Please choose valid methods (KL,Presence-Absence,Binomial,Beta_binomial_Approximate,Beta_binomial_Exact,Wright-Fisher)!")}
   if(is.null(transmission_pairs)){
