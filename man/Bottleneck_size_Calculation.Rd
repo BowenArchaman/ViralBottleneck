@@ -6,13 +6,13 @@
 \usage{
 Bottleneck_size_Calculation(
   transmission_ob,
-  method = "Beta_binomial_Approximate",
+  method,
   plot = FALSE,
   show_table = FALSE,
   transmission_pairs = NULL,
   donor_depth_threshold = 10,
   recipient_depth_threshold = 10,
-  error_filtering = 0.001,
+  error_filtering = 0,
   log = FALSE,
   variant_calling = 0.03,
   Nbmin = 1,
@@ -23,7 +23,7 @@ Bottleneck_size_Calculation(
 \arguments{
 \item{transmission_ob}{is a transmission object created by,`CreateTransmissionObject`.}
 
-\item{method}{is characters containing `KL` method, `Presence-Absence` method, `Binomial` method, `Beta_binomial_Approximate` method, `Beta_binomial_Exact` method and `Wright-Fisher` method}
+\item{method}{is characters containing `KL` method (Emmett et al., 2015), `Presence-Absence` method (Sacristán et al., 2003), `Binomial` method (Sobel Leonard et al., 2017), `Beta_binomial_Approximate` method (Sobel Leonard et al., 2017), `Beta_binomial_Exact` method (Sobel Leonard et al., 2017)and `Wright-Fisher` method(Poon et al., 2016)}
 
 \item{plot}{is a logical value to determine plot the likelihood or not. Each plot would be stored in an individual folder named by transmission id.}
 
@@ -35,11 +35,11 @@ Bottleneck_size_Calculation(
 
 \item{recipient_depth_threshold}{is a integer to filter variants in recipient with the lower sequencing coverage}
 
-\item{error_filtering}{is a numeric and filter. The proportion of the variant sites lower than error calling means the variant is difficult to distinguish from PCR errors. Then, the sites with lower proportion than error calling would be filtered.}
+\item{error_filtering}{is a numeric and filter. The proportion of the variants lower than error calling means the variant is difficult to distinguish from errors. After using that, the variants with values below this threshold would be zero.}
 
 \item{log}{is a logical value to show the log or not. The log would be stored in an individual folder.}
 
-\item{variant_calling}{is a parameter used for `Presence-absence`method, `Binomial` method, `Beta_binomial` method to determine the variants is absent in recipient or not. Proportion of variant site lower than variant calling means this site is absent in recipient.}
+\item{variant_calling}{is a threshold used for calling variant. The variants greater than this thrshould would be trusted.}
 
 \item{Nbmin}{is a integer representing the minimum number in likelihood range.}
 
