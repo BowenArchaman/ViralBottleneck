@@ -1,0 +1,11 @@
+bibentry(
+  bibtype  = "Article",
+  title    = "ViralBottleneck: An R Package for Estimating Viral Transmission Bottlenecks from Deep Sequencing Data Using Multiple Methods",
+  author   = "Bowen Zheng, Paul C D Johnson, Joseph Hughes",
+  journal  = "Virus Evolution",
+  year     = "2025",
+  volume   = veaf071,
+  number   = ,
+  pages    = ,
+  doi      = "https://doi.org/10.1093/ve/veaf071"
+)
