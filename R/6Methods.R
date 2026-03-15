@@ -540,6 +540,15 @@ plot_likelihood_function <- function(id,final_likelihood_vector,confidence_res,m
   table_final_likelihood_vector=rbind.data.frame(final_likelihood_vector,names(final_likelihood_vector))
   x=t(table_final_likelihood_vector)
   x=data.frame(x)
+  
+  # Export likelihood vector matching the plot
+  likelihood_export=data.frame(
+    Nb=as.numeric(x$X2),
+    log_likelihood=as.numeric(x$X1)
+  )
+  likelihood_file=paste0(id,"_",method,"_","likelihood.csv")
+  write.csv(likelihood_export,likelihood_file,row.names = FALSE)
+  
   png(plot_name)
   ggp<-ggplot(x,aes(x=as.numeric(X2),y=as.numeric(X1)))+
     xlab("Nb")+ylab("log-likelihood")+geom_line(col="darkorange2",linewidth=1.5)+
