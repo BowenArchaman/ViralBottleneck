@@ -30,8 +30,18 @@ create_max_f <- function(shared_site,tidy_table){
   } else {
     donor$d_max=apply(donor,1,max)
   }
-  max_table=cbind.data.frame(donor,mix[,5:16,drop=FALSE])
-  max_table=max_table[,-(10:13),drop=FALSE]
+  # Check if mix has enough columns before subsetting
+  if(ncol(mix) >= 16){
+    max_table=cbind.data.frame(donor,mix[,5:16,drop=FALSE])
+  } else if(ncol(mix) >= 5){
+    max_table=cbind.data.frame(donor,mix[,5:ncol(mix),drop=FALSE])
+  } else {
+    max_table=donor
+  }
+  # Only remove columns if they exist
+  if(ncol(max_table) >= 13){
+    max_table=max_table[,-(10:13),drop=FALSE]
+  }
   return(max_table)
 }
 
@@ -73,18 +83,34 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_c
   }
   res=merge(mix,sort,by.x=0,by.y=0)
   row.names(res)=res[,1]
-  res=res[,2:18]
+  # Check if res has enough columns before subsetting
+  if(ncol(res) >= 18){
+    res=res[,2:18,drop=FALSE]
+  } else {
+    # If not enough columns, return what we have
+    res=res[,-1,drop=FALSE]
+  }
   # Handle single row case for apply functions
   if(nrow(res) == 1){
-    res[,"V3"]=find_dominant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,6:9]),as.numeric(res[1,14:15])))
-    res[,"V4"]=find_variant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,6:9]),as.numeric(res[1,14:15])))
-    res$V5=find_dominant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,10:13]),as.numeric(res[1,14:15])))
-    res$V6=find_variant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,10:13]),as.numeric(res[1,14:15])))
+    # Check if we have enough columns
+    if(ncol(res) >= 15){
+      res[,"V3"]=find_dominant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,6:9]),as.numeric(res[1,14:15])))
+      res[,"V4"]=find_variant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,6:9]),as.numeric(res[1,14:15])))
+      if(ncol(res) >= 13){
+        res$V5=find_dominant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,10:13]),as.numeric(res[1,14:15])))
+        res$V6=find_variant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,10:13]),as.numeric(res[1,14:15])))
+      }
+    }
   } else {
-    res[,"V3"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_dominant_in_recipient)
-    res[,"V4"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_variant_in_recipient)
-    res$V5=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_dominant_in_recipient)
-    res$V6=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_variant_in_recipient)
+    # Check if we have enough columns
+    if(ncol(res) >= 15){
+      res[,"V3"]=apply(cbind.data.frame(res[,1:4,drop=FALSE],res[,6:9,drop=FALSE],res[,14:15,drop=FALSE]),1,find_dominant_in_recipient)
+      res[,"V4"]=apply(cbind.data.frame(res[,1:4,drop=FALSE],res[,6:9,drop=FALSE],res[,14:15,drop=FALSE]),1,find_variant_in_recipient)
+      if(ncol(res) >= 13){
+        res$V5=apply(cbind.data.frame(res[,1:4,drop=FALSE],res[,10:13,drop=FALSE],res[,14:15,drop=FALSE]),1,find_dominant_in_recipient)
+        res$V6=apply(cbind.data.frame(res[,1:4,drop=FALSE],res[,10:13,drop=FALSE],res[,14:15,drop=FALSE]),1,find_variant_in_recipient)
+      }
+    }
   }
   return(res)
 }
@@ -102,29 +128,58 @@ Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,vari
 
 
 Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
-  App_matrix=cbind.data.frame(prepared_matrix[,15],prepared_matrix[,17])
+  # Check if we have enough columns
+  if(ncol(prepared_matrix) >= 17){
+    App_matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,17,drop=FALSE])
+  } else if(ncol(prepared_matrix) >= 15){
+    App_matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,ncol(prepared_matrix),drop=FALSE])
+  } else {
+    stop("prepared_matrix does not have enough columns (need at least 15)")
+  }
   return(App_matrix)
 }
 
 Convert_to_Exact_method_matrix<- function(prepared_matrix){
-  matrix=cbind.data.frame(prepared_matrix[,15],prepared_matrix[,18:19])
-  matrix$sum=rowSums(matrix[,2:3])
-  Exact_matix=cbind.data.frame(matrix[,1],matrix[,3:4])
+  # Check if we have enough columns
+  if(ncol(prepared_matrix) >= 19){
+    matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,18:19,drop=FALSE])
+  } else if(ncol(prepared_matrix) >= 18){
+    matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,18:ncol(prepared_matrix),drop=FALSE])
+  } else {
+    stop("prepared_matrix does not have enough columns (need at least 18)")
+  }
+  if(ncol(matrix) >= 3){
+    matrix$sum=rowSums(matrix[,2:ncol(matrix),drop=FALSE])
+    Exact_matix=cbind.data.frame(matrix[,1,drop=FALSE],matrix[,3:ncol(matrix),drop=FALSE])
+  } else {
+    Exact_matix=matrix
+  }
   return(Exact_matix)
 }
 
 Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
-  donor=mix[,1:4]
+  donor=mix[,1:4,drop=FALSE]
   #if error filtering is delete it should be delete
   for(i in 1:8){
     tidy_shared_table[,i][tidy_shared_table[,i]<variant_calling]=0
   }
-  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-  sort=sort[sort[,2]>variant_calling,] #filtered the no-variation sites
-  var_sites=merge(sort[,1:2],tidy_shared_table,by="row.names")
+  # Handle single row case
+  if(nrow(donor) == 1){
+    sort = as.data.frame(matrix(sort(as.numeric(donor[1,]), decreasing=TRUE), nrow=1, ncol=4))
+    colnames(sort) = colnames(donor)
+    row.names(sort) = row.names(donor)
+  } else {
+    sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
+    sort=as.data.frame(sort)
+  }
+  sort=sort[sort[,2]>variant_calling,,drop=FALSE] #filtered the no-variation sites
+  if(nrow(sort) == 0){
+    return(data.frame())
+  }
+  var_sites=merge(sort[,1:2,drop=FALSE],tidy_shared_table,by="row.names")
   row.names(var_sites)=var_sites[,1]
-  var_sites=var_sites[,-(1:3)]
+  var_sites=var_sites[,-(1:3),drop=FALSE]
   return(var_sites)
 }
 
