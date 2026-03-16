@@ -207,22 +207,35 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   absent=table[table[,2]<variant_calling,]
   likelihood_vector_present=numeric(nrow(present))
   likelihood_vector_absent=numeric(nrow(absent))
-  for(i in 0:k){
-    P1=dbeta(present[,2], i, k-i)
-    pbinVd1=dbinom(i, size=k, prob=present[,1])
-    add1=P1*pbinVd1
-    #print(is.infinite(add1))
-    likelihood_vector_present=likelihood_vector_present+add1
-    #print(likelihood_vector_present)
+  
+  # present variants
+  if(nrow(present) != 0){
+    for(i in 0:k){
+      alpha=i
+      Beta=(k-i)
+      # avoid zero-shape parameters for Beta distribution
+      if(alpha==0){alpha=10^-9}
+      if(Beta==0){Beta=10^-9}
+      P1=dbeta(present[,2], alpha, Beta)
+      pbinVd1=dbinom(i, size=k, prob=present[,1])
+      add1=P1*pbinVd1
+      likelihood_vector_present=likelihood_vector_present+add1
+    }
   }
   
-  for(j in 0:k){
-    P2=pbeta(variant_calling, j, k-j)
-    pbinVd2=dbinom(j, size=k, prob=absent[,1])
-    add2=P2*pbinVd2
-    #print(is.infinite(add2))
-    likelihood_vector_absent=likelihood_vector_absent+add2
-    #print(likelihood_vector_absent)
+  # absent variants
+  if(nrow(absent) != 0){
+    for(j in 0:k){
+      alpha=j
+      Beta=(k-j)
+      # avoid zero-shape parameters for Beta CDF
+      if(alpha==0){alpha=10^-9}
+      if(Beta==0){Beta=10^-9}
+      P2=pbeta(variant_calling, alpha, Beta)
+      pbinVd2=dbinom(j, size=k, prob=absent[,1])
+      add2=P2*pbinVd2
+      likelihood_vector_absent=likelihood_vector_absent+add2
+    }
   }
   sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
   return(sum)
@@ -244,9 +257,10 @@ one_Nbval_function_Exact<- function(k,table,variant_calling){
   table=subset(table,table[,1]>=variant_calling)
   present=table[table[,2]>=variant_calling*table[,3],]
   absent=table[table[,2]<variant_calling*table[,3],]
-  likelihood_vector_present=numeric(nrow(present))
-  likelihood_vector_absent=numeric(nrow(absent))
+  likelihood_vector_present=numeric(0)
+  likelihood_vector_absent=numeric(0)
   if(nrow(present) != 0){
+    likelihood_vector_present=numeric(nrow(present))
     for(i in 0:k){
       alpha=i
       Beta=(k-i)
@@ -260,6 +274,7 @@ one_Nbval_function_Exact<- function(k,table,variant_calling){
     }
   }
   if(nrow(absent) != 0){
+    likelihood_vector_absent=numeric(nrow(absent))
     for(j in 0:k){
       alpha=j
       Beta=(k-j)
@@ -272,7 +287,18 @@ one_Nbval_function_Exact<- function(k,table,variant_calling){
       likelihood_vector_absent=likelihood_vector_absent+add2
     }
   }
-  sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
+  # Handle empty vectors and zero values
+  sum_present=0
+  sum_absent=0
+  if(length(likelihood_vector_present) > 0){
+    likelihood_vector_present[likelihood_vector_present <= 0] = 10^-9
+    sum_present=sum(log(likelihood_vector_present))
+  }
+  if(length(likelihood_vector_absent) > 0){
+    likelihood_vector_absent[likelihood_vector_absent <= 0] = 10^-9
+    sum_absent=sum(log(likelihood_vector_absent))
+  }
+  sum=sum_present+sum_absent
   return(sum)
 }
 
@@ -313,19 +339,36 @@ one_Nbval_function_binomial <- function(k,table,variant_calling){
   table=find_fixed_variant_exact(table,variant_calling)
   present=table[table[,2]>=variant_calling*table[,3],]
   absent=table[table[,2]<variant_calling*table[,3],]
-  likelihood_vector_present=numeric(nrow(present))
-  likelihood_vector_absent=numeric(nrow(absent))
-  for(i in 0:k){
-    pbinVd1=dbinom(i, size=k, prob=present[,1])
-    add1=dbinom(present[,2],size = present[,3],prob = i/k)*pbinVd1
-    likelihood_vector_present=likelihood_vector_present+add1
+  likelihood_vector_present=numeric(0)
+  likelihood_vector_absent=numeric(0)
+  if(nrow(present) != 0){
+    likelihood_vector_present=numeric(nrow(present))
+    for(i in 0:k){
+      pbinVd1=dbinom(i, size=k, prob=present[,1])
+      add1=dbinom(present[,2],size = present[,3],prob = i/k)*pbinVd1
+      likelihood_vector_present=likelihood_vector_present+add1
+    }
   }
-  for(j in 0:k){
-    pbinVd2=dbinom(j,size = k,prob = absent[,1])
-    add2=pbinom(floor(variant_calling*absent[,3]),size = absent[,3],prob = j/k)*pbinVd2
-    likelihood_vector_absent=likelihood_vector_absent+add2
+  if(nrow(absent) != 0){
+    likelihood_vector_absent=numeric(nrow(absent))
+    for(j in 0:k){
+      pbinVd2=dbinom(j,size = k,prob = absent[,1])
+      add2=pbinom(floor(variant_calling*absent[,3]),size = absent[,3],prob = j/k)*pbinVd2
+      likelihood_vector_absent=likelihood_vector_absent+add2
+    }
   }
-  sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
+  # Handle empty vectors and zero values
+  sum_present=0
+  sum_absent=0
+  if(length(likelihood_vector_present) > 0){
+    likelihood_vector_present[likelihood_vector_present <= 0] = 10^-9
+    sum_present=sum(log(likelihood_vector_present))
+  }
+  if(length(likelihood_vector_absent) > 0){
+    likelihood_vector_absent[likelihood_vector_absent <= 0] = 10^-9
+    sum_absent=sum(log(likelihood_vector_absent))
+  }
+  sum=sum_present+sum_absent
   return(sum)
 }
 
