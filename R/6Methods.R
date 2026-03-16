@@ -22,11 +22,16 @@ Before_calculation_table<-function(one_pair,donor_depth_threshold, recipient_dep
 create_max_f <- function(shared_site,tidy_table){
   mix=merge(tidy_table,shared_site,by.x=0,by.y=0)
   row.names(mix)=mix[,1]
-  mix=mix[,-1]
-  donor=mix[,1:4]
-  donor$d_max=apply(donor,1,max)
-  max_table=cbind.data.frame(donor,mix[,5:16])
-  max_table=max_table[,-(10:13)]
+  mix=mix[,-1,drop=FALSE]
+  donor=mix[,1:4,drop=FALSE]
+  # Handle single row case
+  if(nrow(donor) == 1){
+    donor$d_max = max(as.numeric(donor[1,]))
+  } else {
+    donor$d_max=apply(donor,1,max)
+  }
+  max_table=cbind.data.frame(donor,mix[,5:16,drop=FALSE])
+  max_table=max_table[,-(10:13),drop=FALSE]
   return(max_table)
 }
 
@@ -52,17 +57,35 @@ find_variant_in_recipient <- function(row){
 Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
   donor=mix[,1:4]
-  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-  sort=sort[sort[,2]>variant_calling,]
-  sort=sort[sort[,2]!=sort[,3],]#check the same variants
-  sort=sort[sort[,3]<=variant_calling,]#filter non-biallelic
+  # Handle single row case
+  if(nrow(donor) == 1){
+    sort = as.data.frame(matrix(sort(as.numeric(donor[1,]), decreasing=TRUE), nrow=1, ncol=4))
+    colnames(sort) = colnames(donor)
+  } else {
+    sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
+    sort=as.data.frame(sort)
+  }
+  sort=sort[sort[,2]>variant_calling,,drop=FALSE]
+  sort=sort[sort[,2]!=sort[,3],,drop=FALSE]#check the same variants
+  sort=sort[sort[,3]<=variant_calling,,drop=FALSE]#filter non-biallelic
+  if(nrow(sort) == 0){
+    return(data.frame())
+  }
   res=merge(mix,sort,by.x=0,by.y=0)
   row.names(res)=res[,1]
   res=res[,2:18]
-  res[,"V3"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_dominant_in_recipient)
-  res[,"V4"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_variant_in_recipient)
-  res$V5=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_dominant_in_recipient)
-  res$V6=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_variant_in_recipient)
+  # Handle single row case for apply functions
+  if(nrow(res) == 1){
+    res[,"V3"]=find_dominant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,6:9]),as.numeric(res[1,14:15])))
+    res[,"V4"]=find_variant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,6:9]),as.numeric(res[1,14:15])))
+    res$V5=find_dominant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,10:13]),as.numeric(res[1,14:15])))
+    res$V6=find_variant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,10:13]),as.numeric(res[1,14:15])))
+  } else {
+    res[,"V3"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_dominant_in_recipient)
+    res[,"V4"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_variant_in_recipient)
+    res$V5=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_dominant_in_recipient)
+    res$V6=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_variant_in_recipient)
+  }
   return(res)
 }
 
@@ -124,14 +147,12 @@ find_fixed_variant_app<- function(table,variant_calling){
   if(nrow(table) == 0){
     return(table)
   } else if(nrow(table) == 1){
-    row_result = find_fixed_variant_app_onerow(unlist(table[1,]), variant_calling)
-    # Preserve column names from original table
-    table_result = as.data.frame(matrix(row_result, nrow=1, ncol=length(row_result)))
-    if(length(names(row_result)) > 0){
-      colnames(table_result) = names(row_result)
-    } else if(length(colnames(table)) > 0){
-      colnames(table_result) = colnames(table)
-    }
+    # For single row, process directly without apply
+    row_vec = as.numeric(table[1,])
+    row_result = find_fixed_variant_app_onerow(row_vec, variant_calling)
+    # Convert back to data.frame preserving structure
+    table_result = as.data.frame(t(as.matrix(row_result)), stringsAsFactors=FALSE)
+    colnames(table_result) = colnames(table)
     table = table_result
   } else {
     table=as.data.frame(t(apply(table,1,find_fixed_variant_app_onerow,variant_calling=variant_calling)))
@@ -157,14 +178,12 @@ find_fixed_variant_exact<- function(table,variant_calling){
   if(nrow(table) == 0){
     return(table)
   } else if(nrow(table) == 1){
-    row_result = find_fixed_variant_exact_onerow(unlist(table[1,]), variant_calling)
-    # Preserve column names from original table
-    table_result = as.data.frame(matrix(row_result, nrow=1, ncol=length(row_result)))
-    if(length(names(row_result)) > 0){
-      colnames(table_result) = names(row_result)
-    } else if(length(colnames(table)) > 0){
-      colnames(table_result) = colnames(table)
-    }
+    # For single row, process directly without apply
+    row_vec = as.numeric(table[1,])
+    row_result = find_fixed_variant_exact_onerow(row_vec, variant_calling)
+    # Convert back to data.frame preserving structure
+    table_result = as.data.frame(t(as.matrix(row_result)), stringsAsFactors=FALSE)
+    colnames(table_result) = colnames(table)
     table = table_result
   } else {
     table=as.data.frame(t(apply(table,1,find_fixed_variant_exact_onerow,variant_calling=variant_calling)))
