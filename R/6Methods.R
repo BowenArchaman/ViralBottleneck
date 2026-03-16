@@ -203,13 +203,20 @@ Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
   table=find_fixed_variant_app(table,variant_calling)
   table=subset(table,table[,1]>=variant_calling)
-  present=table[table[,2]>=variant_calling,]
-  absent=table[table[,2]<variant_calling,]
-  likelihood_vector_present=numeric(nrow(present))
-  likelihood_vector_absent=numeric(nrow(absent))
+  # Ensure data.frame structure is maintained for single row cases
+  if(nrow(table)==0){
+    present=data.frame()
+    absent=data.frame()
+  } else {
+    present=table[table[,2]>=variant_calling,,drop=FALSE]
+    absent=table[table[,2]<variant_calling,,drop=FALSE]
+  }
+  likelihood_vector_present=numeric(0)
+  likelihood_vector_absent=numeric(0)
   
   # present variants
   if(nrow(present) != 0){
+    likelihood_vector_present=numeric(nrow(present))
     for(i in 0:k){
       alpha=i
       Beta=(k-i)
@@ -225,6 +232,7 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   
   # absent variants
   if(nrow(absent) != 0){
+    likelihood_vector_absent=numeric(nrow(absent))
     for(j in 0:k){
       alpha=j
       Beta=(k-j)
@@ -237,7 +245,18 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
       likelihood_vector_absent=likelihood_vector_absent+add2
     }
   }
-  sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
+  # Handle empty vectors and zero values
+  sum_present=0
+  sum_absent=0
+  if(length(likelihood_vector_present) > 0){
+    likelihood_vector_present[likelihood_vector_present <= 0] = 10^-9
+    sum_present=sum(log(likelihood_vector_present))
+  }
+  if(length(likelihood_vector_absent) > 0){
+    likelihood_vector_absent[likelihood_vector_absent <= 0] = 10^-9
+    sum_absent=sum(log(likelihood_vector_absent))
+  }
+  sum=sum_present+sum_absent
   return(sum)
 }
 
@@ -255,8 +274,14 @@ Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
 one_Nbval_function_Exact<- function(k,table,variant_calling){
   table=find_fixed_variant_exact(table,variant_calling)
   table=subset(table,table[,1]>=variant_calling)
-  present=table[table[,2]>=variant_calling*table[,3],]
-  absent=table[table[,2]<variant_calling*table[,3],]
+  # Ensure data.frame structure is maintained for single row cases
+  if(nrow(table)==0){
+    present=data.frame()
+    absent=data.frame()
+  } else {
+    present=table[table[,2]>=variant_calling*table[,3],,drop=FALSE]
+    absent=table[table[,2]<variant_calling*table[,3],,drop=FALSE]
+  }
   likelihood_vector_present=numeric(0)
   likelihood_vector_absent=numeric(0)
   if(nrow(present) != 0){
@@ -314,12 +339,17 @@ Range_function_Exact<-function(variant_calling,table,Nbmin,Nbmax){
 
 #Presence-Absence
 one_Nbval_function_preOrabsent <- function(k,table,variant_calling){
-  present=table[table[,2]>=variant_calling,]
-  absent=table[table[,2]<variant_calling,]
-  likelihood_vector_present=numeric(nrow(present))
-  likelihood_vector_absent=numeric(nrow(absent))
-  likelihood_vector_present=log(1-(1-present[,1])^k)
-  likelihood_vector_absent=k*log(1-absent[,1])
+  # Ensure data.frame structure is maintained for single row cases
+  present=table[table[,2]>=variant_calling,,drop=FALSE]
+  absent=table[table[,2]<variant_calling,,drop=FALSE]
+  likelihood_vector_present=numeric(0)
+  likelihood_vector_absent=numeric(0)
+  if(nrow(present) > 0){
+    likelihood_vector_present=log(1-(1-present[,1])^k)
+  }
+  if(nrow(absent) > 0){
+    likelihood_vector_absent=k*log(1-absent[,1])
+  }
   one_val_likelihood=sum(likelihood_vector_absent)+sum(likelihood_vector_present)
   return(one_val_likelihood)
 }
@@ -337,8 +367,14 @@ Range_function_preOrabsent <- function(variant_calling,table,Nbmin,Nbmax){
 #binomial method
 one_Nbval_function_binomial <- function(k,table,variant_calling){
   table=find_fixed_variant_exact(table,variant_calling)
-  present=table[table[,2]>=variant_calling*table[,3],]
-  absent=table[table[,2]<variant_calling*table[,3],]
+  # Ensure data.frame structure is maintained for single row cases
+  if(nrow(table)==0){
+    present=data.frame()
+    absent=data.frame()
+  } else {
+    present=table[table[,2]>=variant_calling*table[,3],,drop=FALSE]
+    absent=table[table[,2]<variant_calling*table[,3],,drop=FALSE]
+  }
   likelihood_vector_present=numeric(0)
   likelihood_vector_absent=numeric(0)
   if(nrow(present) != 0){
