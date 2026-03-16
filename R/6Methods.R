@@ -120,7 +120,22 @@ find_fixed_variant_app_onerow <- function(row,variant_calling){
 }
 
 find_fixed_variant_app<- function(table,variant_calling){
-  table=as.data.frame(t(apply(table,1,find_fixed_variant_app_onerow,variant_calling=variant_calling)))
+  # Handle single row case separately to avoid dimension issues
+  if(nrow(table) == 0){
+    return(table)
+  } else if(nrow(table) == 1){
+    row_result = find_fixed_variant_app_onerow(unlist(table[1,]), variant_calling)
+    # Preserve column names from original table
+    table_result = as.data.frame(matrix(row_result, nrow=1, ncol=length(row_result)))
+    if(length(names(row_result)) > 0){
+      colnames(table_result) = names(row_result)
+    } else if(length(colnames(table)) > 0){
+      colnames(table_result) = colnames(table)
+    }
+    table = table_result
+  } else {
+    table=as.data.frame(t(apply(table,1,find_fixed_variant_app_onerow,variant_calling=variant_calling)))
+  }
   return(table)
 }
 
@@ -138,7 +153,22 @@ find_fixed_variant_exact_onerow <- function(row,variant_calling){
   return(row)
 }
 find_fixed_variant_exact<- function(table,variant_calling){
-  table=as.data.frame(t(apply(table,1,find_fixed_variant_exact_onerow,variant_calling=variant_calling)))
+  # Handle single row case separately to avoid dimension issues
+  if(nrow(table) == 0){
+    return(table)
+  } else if(nrow(table) == 1){
+    row_result = find_fixed_variant_exact_onerow(unlist(table[1,]), variant_calling)
+    # Preserve column names from original table
+    table_result = as.data.frame(matrix(row_result, nrow=1, ncol=length(row_result)))
+    if(length(names(row_result)) > 0){
+      colnames(table_result) = names(row_result)
+    } else if(length(colnames(table)) > 0){
+      colnames(table_result) = colnames(table)
+    }
+    table = table_result
+  } else {
+    table=as.data.frame(t(apply(table,1,find_fixed_variant_exact_onerow,variant_calling=variant_calling)))
+  }
   return(table)
 }
 
@@ -202,7 +232,10 @@ Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
 #Beta-binomial Approximate verison
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
   table=find_fixed_variant_app(table,variant_calling)
-  table=subset(table,table[,1]>=variant_calling)
+  # Use safer subsetting method that works with single row dataframes
+  if(nrow(table) > 0){
+    table = table[table[,1]>=variant_calling,,drop=FALSE]
+  }
   # Ensure data.frame structure is maintained for single row cases
   if(nrow(table)==0){
     present=data.frame()
@@ -273,7 +306,10 @@ Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
 #Beta-binomial exact verison
 one_Nbval_function_Exact<- function(k,table,variant_calling){
   table=find_fixed_variant_exact(table,variant_calling)
-  table=subset(table,table[,1]>=variant_calling)
+  # Use safer subsetting method that works with single row dataframes
+  if(nrow(table) > 0){
+    table = table[table[,1]>=variant_calling,,drop=FALSE]
+  }
   # Ensure data.frame structure is maintained for single row cases
   if(nrow(table)==0){
     present=data.frame()
