@@ -22,26 +22,11 @@ Before_calculation_table<-function(one_pair,donor_depth_threshold, recipient_dep
 create_max_f <- function(shared_site,tidy_table){
   mix=merge(tidy_table,shared_site,by.x=0,by.y=0)
   row.names(mix)=mix[,1]
-  mix=mix[,-1,drop=FALSE]
-  donor=mix[,1:4,drop=FALSE]
-  # Handle single row case
-  if(nrow(donor) == 1){
-    donor$d_max = max(as.numeric(donor[1,]))
-  } else {
-    donor$d_max=apply(donor,1,max)
-  }
-  # Check if mix has enough columns before subsetting
-  if(ncol(mix) >= 16){
-    max_table=cbind.data.frame(donor,mix[,5:16,drop=FALSE])
-  } else if(ncol(mix) >= 5){
-    max_table=cbind.data.frame(donor,mix[,5:ncol(mix),drop=FALSE])
-  } else {
-    max_table=donor
-  }
-  # Only remove columns if they exist
-  if(ncol(max_table) >= 13){
-    max_table=max_table[,-(10:13),drop=FALSE]
-  }
+  mix=mix[,-1]
+  donor=mix[,1:4]
+  donor$d_max=apply(donor,1,max)
+  max_table=cbind.data.frame(donor,mix[,5:16])
+  max_table=max_table[,-(10:13)]
   return(max_table)
 }
 
@@ -67,51 +52,17 @@ find_variant_in_recipient <- function(row){
 Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
   donor=mix[,1:4]
-  # Handle single row case
-  if(nrow(donor) == 1){
-    sort = as.data.frame(matrix(sort(as.numeric(donor[1,]), decreasing=TRUE), nrow=1, ncol=4))
-    colnames(sort) = colnames(donor)
-  } else {
-    sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-    sort=as.data.frame(sort)
-  }
-  sort=sort[sort[,2]>variant_calling,,drop=FALSE]
-  sort=sort[sort[,2]!=sort[,3],,drop=FALSE]#check the same variants
-  sort=sort[sort[,3]<=variant_calling,,drop=FALSE]#filter non-biallelic
-  if(nrow(sort) == 0){
-    return(data.frame())
-  }
+  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
+  sort=sort[sort[,2]>variant_calling,]
+  sort=sort[sort[,2]!=sort[,3],]#check the same variants
+  sort=sort[sort[,3]<=variant_calling,]#filter non-biallelic
   res=merge(mix,sort,by.x=0,by.y=0)
   row.names(res)=res[,1]
-  # Check if res has enough columns before subsetting
-  if(ncol(res) >= 18){
-    res=res[,2:18,drop=FALSE]
-  } else {
-    # If not enough columns, return what we have
-    res=res[,-1,drop=FALSE]
-  }
-  # Handle single row case for apply functions
-  if(nrow(res) == 1){
-    # Check if we have enough columns
-    if(ncol(res) >= 15){
-      res[,"V3"]=find_dominant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,6:9]),as.numeric(res[1,14:15])))
-      res[,"V4"]=find_variant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,6:9]),as.numeric(res[1,14:15])))
-      if(ncol(res) >= 13){
-        res$V5=find_dominant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,10:13]),as.numeric(res[1,14:15])))
-        res$V6=find_variant_in_recipient(c(as.numeric(res[1,1:4]),as.numeric(res[1,10:13]),as.numeric(res[1,14:15])))
-      }
-    }
-  } else {
-    # Check if we have enough columns
-    if(ncol(res) >= 15){
-      res[,"V3"]=apply(cbind.data.frame(res[,1:4,drop=FALSE],res[,6:9,drop=FALSE],res[,14:15,drop=FALSE]),1,find_dominant_in_recipient)
-      res[,"V4"]=apply(cbind.data.frame(res[,1:4,drop=FALSE],res[,6:9,drop=FALSE],res[,14:15,drop=FALSE]),1,find_variant_in_recipient)
-      if(ncol(res) >= 13){
-        res$V5=apply(cbind.data.frame(res[,1:4,drop=FALSE],res[,10:13,drop=FALSE],res[,14:15,drop=FALSE]),1,find_dominant_in_recipient)
-        res$V6=apply(cbind.data.frame(res[,1:4,drop=FALSE],res[,10:13,drop=FALSE],res[,14:15,drop=FALSE]),1,find_variant_in_recipient)
-      }
-    }
-  }
+  res=res[,2:18]
+  res[,"V3"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_dominant_in_recipient)
+  res[,"V4"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_variant_in_recipient)
+  res$V5=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_dominant_in_recipient)
+  res$V6=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_variant_in_recipient)
   return(res)
 }
 
@@ -128,58 +79,29 @@ Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,vari
 
 
 Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
-  # Check if we have enough columns
-  if(ncol(prepared_matrix) >= 17){
-    App_matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,17,drop=FALSE])
-  } else if(ncol(prepared_matrix) >= 15){
-    App_matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,ncol(prepared_matrix),drop=FALSE])
-  } else {
-    stop("prepared_matrix does not have enough columns (need at least 15)")
-  }
+  App_matrix=cbind.data.frame(prepared_matrix[,15],prepared_matrix[,17])
   return(App_matrix)
 }
 
 Convert_to_Exact_method_matrix<- function(prepared_matrix){
-  # Check if we have enough columns
-  if(ncol(prepared_matrix) >= 19){
-    matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,18:19,drop=FALSE])
-  } else if(ncol(prepared_matrix) >= 18){
-    matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,18:ncol(prepared_matrix),drop=FALSE])
-  } else {
-    stop("prepared_matrix does not have enough columns (need at least 18)")
-  }
-  if(ncol(matrix) >= 3){
-    matrix$sum=rowSums(matrix[,2:ncol(matrix),drop=FALSE])
-    Exact_matix=cbind.data.frame(matrix[,1,drop=FALSE],matrix[,3:ncol(matrix),drop=FALSE])
-  } else {
-    Exact_matix=matrix
-  }
+  matrix=cbind.data.frame(prepared_matrix[,15],prepared_matrix[,18:19])
+  matrix$sum=rowSums(matrix[,2:3])
+  Exact_matix=cbind.data.frame(matrix[,1],matrix[,3:4])
   return(Exact_matix)
 }
 
 Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
-  donor=mix[,1:4,drop=FALSE]
+  donor=mix[,1:4]
   #if error filtering is delete it should be delete
   for(i in 1:8){
     tidy_shared_table[,i][tidy_shared_table[,i]<variant_calling]=0
   }
-  # Handle single row case
-  if(nrow(donor) == 1){
-    sort = as.data.frame(matrix(sort(as.numeric(donor[1,]), decreasing=TRUE), nrow=1, ncol=4))
-    colnames(sort) = colnames(donor)
-    row.names(sort) = row.names(donor)
-  } else {
-    sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-    sort=as.data.frame(sort)
-  }
-  sort=sort[sort[,2]>variant_calling,,drop=FALSE] #filtered the no-variation sites
-  if(nrow(sort) == 0){
-    return(data.frame())
-  }
-  var_sites=merge(sort[,1:2,drop=FALSE],tidy_shared_table,by="row.names")
+  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
+  sort=sort[sort[,2]>variant_calling,] #filtered the no-variation sites
+  var_sites=merge(sort[,1:2],tidy_shared_table,by="row.names")
   row.names(var_sites)=var_sites[,1]
-  var_sites=var_sites[,-(1:3),drop=FALSE]
+  var_sites=var_sites[,-(1:3)]
   return(var_sites)
 }
 
@@ -198,20 +120,7 @@ find_fixed_variant_app_onerow <- function(row,variant_calling){
 }
 
 find_fixed_variant_app<- function(table,variant_calling){
-  # Handle single row case separately to avoid dimension issues
-  if(nrow(table) == 0){
-    return(table)
-  } else if(nrow(table) == 1){
-    # For single row, process directly without apply
-    row_vec = as.numeric(table[1,])
-    row_result = find_fixed_variant_app_onerow(row_vec, variant_calling)
-    # Convert back to data.frame preserving structure
-    table_result = as.data.frame(t(as.matrix(row_result)), stringsAsFactors=FALSE)
-    colnames(table_result) = colnames(table)
-    table = table_result
-  } else {
-    table=as.data.frame(t(apply(table,1,find_fixed_variant_app_onerow,variant_calling=variant_calling)))
-  }
+  table=as.data.frame(t(apply(table,1,find_fixed_variant_app_onerow,variant_calling=variant_calling)))
   return(table)
 }
 
@@ -229,20 +138,7 @@ find_fixed_variant_exact_onerow <- function(row,variant_calling){
   return(row)
 }
 find_fixed_variant_exact<- function(table,variant_calling){
-  # Handle single row case separately to avoid dimension issues
-  if(nrow(table) == 0){
-    return(table)
-  } else if(nrow(table) == 1){
-    # For single row, process directly without apply
-    row_vec = as.numeric(table[1,])
-    row_result = find_fixed_variant_exact_onerow(row_vec, variant_calling)
-    # Convert back to data.frame preserving structure
-    table_result = as.data.frame(t(as.matrix(row_result)), stringsAsFactors=FALSE)
-    colnames(table_result) = colnames(table)
-    table = table_result
-  } else {
-    table=as.data.frame(t(apply(table,1,find_fixed_variant_exact_onerow,variant_calling=variant_calling)))
-  }
+  table=as.data.frame(t(apply(table,1,find_fixed_variant_exact_onerow,variant_calling=variant_calling)))
   return(table)
 }
 
@@ -306,24 +202,14 @@ Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
 #Beta-binomial Approximate verison
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
   table=find_fixed_variant_app(table,variant_calling)
-  # Use safer subsetting method that works with single row dataframes
-  if(nrow(table) > 0){
-    table = table[table[,1]>=variant_calling,,drop=FALSE]
-  }
-  # Ensure data.frame structure is maintained for single row cases
-  if(nrow(table)==0){
-    present=data.frame()
-    absent=data.frame()
-  } else {
-    present=table[table[,2]>=variant_calling,,drop=FALSE]
-    absent=table[table[,2]<variant_calling,,drop=FALSE]
-  }
-  likelihood_vector_present=numeric(0)
-  likelihood_vector_absent=numeric(0)
+  table=subset(table,table[,1]>=variant_calling)
+  present=table[table[,2]>=variant_calling,]
+  absent=table[table[,2]<variant_calling,]
+  likelihood_vector_present=numeric(nrow(present))
+  likelihood_vector_absent=numeric(nrow(absent))
   
   # present variants
   if(nrow(present) != 0){
-    likelihood_vector_present=numeric(nrow(present))
     for(i in 0:k){
       alpha=i
       Beta=(k-i)
@@ -339,7 +225,6 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   
   # absent variants
   if(nrow(absent) != 0){
-    likelihood_vector_absent=numeric(nrow(absent))
     for(j in 0:k){
       alpha=j
       Beta=(k-j)
@@ -352,18 +237,7 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
       likelihood_vector_absent=likelihood_vector_absent+add2
     }
   }
-  # Handle empty vectors and zero values
-  sum_present=0
-  sum_absent=0
-  if(length(likelihood_vector_present) > 0){
-    likelihood_vector_present[likelihood_vector_present <= 0] = 10^-9
-    sum_present=sum(log(likelihood_vector_present))
-  }
-  if(length(likelihood_vector_absent) > 0){
-    likelihood_vector_absent[likelihood_vector_absent <= 0] = 10^-9
-    sum_absent=sum(log(likelihood_vector_absent))
-  }
-  sum=sum_present+sum_absent
+  sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
   return(sum)
 }
 
@@ -380,18 +254,9 @@ Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
 #Beta-binomial exact verison
 one_Nbval_function_Exact<- function(k,table,variant_calling){
   table=find_fixed_variant_exact(table,variant_calling)
-  # Use safer subsetting method that works with single row dataframes
-  if(nrow(table) > 0){
-    table = table[table[,1]>=variant_calling,,drop=FALSE]
-  }
-  # Ensure data.frame structure is maintained for single row cases
-  if(nrow(table)==0){
-    present=data.frame()
-    absent=data.frame()
-  } else {
-    present=table[table[,2]>=variant_calling*table[,3],,drop=FALSE]
-    absent=table[table[,2]<variant_calling*table[,3],,drop=FALSE]
-  }
+  table=subset(table,table[,1]>=variant_calling)
+  present=table[table[,2]>=variant_calling*table[,3],]
+  absent=table[table[,2]<variant_calling*table[,3],]
   likelihood_vector_present=numeric(0)
   likelihood_vector_absent=numeric(0)
   if(nrow(present) != 0){
@@ -449,17 +314,12 @@ Range_function_Exact<-function(variant_calling,table,Nbmin,Nbmax){
 
 #Presence-Absence
 one_Nbval_function_preOrabsent <- function(k,table,variant_calling){
-  # Ensure data.frame structure is maintained for single row cases
-  present=table[table[,2]>=variant_calling,,drop=FALSE]
-  absent=table[table[,2]<variant_calling,,drop=FALSE]
-  likelihood_vector_present=numeric(0)
-  likelihood_vector_absent=numeric(0)
-  if(nrow(present) > 0){
-    likelihood_vector_present=log(1-(1-present[,1])^k)
-  }
-  if(nrow(absent) > 0){
-    likelihood_vector_absent=k*log(1-absent[,1])
-  }
+  present=table[table[,2]>=variant_calling,]
+  absent=table[table[,2]<variant_calling,]
+  likelihood_vector_present=numeric(nrow(present))
+  likelihood_vector_absent=numeric(nrow(absent))
+  likelihood_vector_present=log(1-(1-present[,1])^k)
+  likelihood_vector_absent=k*log(1-absent[,1])
   one_val_likelihood=sum(likelihood_vector_absent)+sum(likelihood_vector_present)
   return(one_val_likelihood)
 }
@@ -477,14 +337,8 @@ Range_function_preOrabsent <- function(variant_calling,table,Nbmin,Nbmax){
 #binomial method
 one_Nbval_function_binomial <- function(k,table,variant_calling){
   table=find_fixed_variant_exact(table,variant_calling)
-  # Ensure data.frame structure is maintained for single row cases
-  if(nrow(table)==0){
-    present=data.frame()
-    absent=data.frame()
-  } else {
-    present=table[table[,2]>=variant_calling*table[,3],,drop=FALSE]
-    absent=table[table[,2]<variant_calling*table[,3],,drop=FALSE]
-  }
+  present=table[table[,2]>=variant_calling*table[,3],]
+  absent=table[table[,2]<variant_calling*table[,3],]
   likelihood_vector_present=numeric(0)
   likelihood_vector_absent=numeric(0)
   if(nrow(present) != 0){
