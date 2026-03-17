@@ -460,7 +460,7 @@ return_var_with_variance <- function(P_table,P1_table,signal){
 
 Calculate_Bottleneck_size_wrighter_fisher <- function(p,q,var){
   p_q_var_table=cbind.data.frame(p,q,var)
-  nb_v=(p_q_var_table[,1]*p_q_var_table[,2]) / (2*p_q_var_table[,3])
+  nb_v=(p_q_var_table[,1]*p_q_var_table[,2]) / (p_q_var_table[,3])
   return(nb_v)
 }
 
