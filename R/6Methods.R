@@ -146,12 +146,14 @@ Convert_to_Exact_method_matrix<- function(prepared_matrix){
 Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
   if(nrow(mix)==0){
-    out=data.frame(matrix(nrow=0, ncol=ncol(tidy_shared_table)-2))
-    names(out)=names(tidy_shared_table)[-(1:2)]
+    # Return 8 columns: do.A, do.T, do.C, do.G, re.A, re.T, re.C, re.G (exclude re.total_reads)
+    out=data.frame(matrix(nrow=0, ncol=8))
+    names(out)=c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G")
     return(out)
   }
   donor=mix[,1:4,drop=FALSE]
   #if error filtering is delete it should be delete
+  # tidy_shared_table has 9 columns: do.A(1), do.T(2), do.C(3), do.G(4), re.A(5), re.T(6), re.C(7), re.G(8), re.total_reads(9)
   for(i in 1:8){
     tidy_shared_table[,i][tidy_shared_table[,i]<variant_calling]=0
   }
@@ -163,13 +165,16 @@ Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,va
   }
   sort=sort[sort[,2]>variant_calling,,drop=FALSE] #filtered the no-variation sites
   if(nrow(sort)==0){
-    out=data.frame(matrix(nrow=0, ncol=ncol(tidy_shared_table)-2))
-    names(out)=names(tidy_shared_table)[-(1:2)]
+    # Return 8 columns: do.A, do.T, do.C, do.G, re.A, re.T, re.C, re.G (exclude re.total_reads)
+    out=data.frame(matrix(nrow=0, ncol=8))
+    names(out)=c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G")
     return(out)
   }
   var_sites=merge(sort[,1:2,drop=FALSE],tidy_shared_table,by="row.names")
   row.names(var_sites)=var_sites[,1]
   var_sites=var_sites[,-(1:3),drop=FALSE]
+  # Return only first 8 columns (exclude re.total_reads which is column 9)
+  var_sites=var_sites[,1:8,drop=FALSE]
   return(var_sites)
 }
 
