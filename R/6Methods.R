@@ -22,11 +22,12 @@ Before_calculation_table<-function(one_pair,donor_depth_threshold, recipient_dep
 create_max_f <- function(shared_site,tidy_table){
   mix=merge(tidy_table,shared_site,by.x=0,by.y=0)
   row.names(mix)=mix[,1]
-  mix=mix[,-1]
-  donor=mix[,1:4]
+  mix=mix[,-1,drop=FALSE]
+  donor=mix[,1:4,drop=FALSE]
   donor$d_max=apply(donor,1,max)
-  max_table=cbind.data.frame(donor,mix[,5:16])
-  max_table=max_table[,-(10:13)]
+  # include re.total_reads (tidy col 9) and shared_site cols: mix[,5:17], then drop 10:13 as before
+  max_table=cbind.data.frame(donor,mix[,5:17,drop=FALSE])
+  max_table=max_table[,-(10:13),drop=FALSE]
   return(max_table)
 }
 
@@ -51,18 +52,46 @@ find_variant_in_recipient <- function(row){
 
 Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
-  donor=mix[,1:4]
-  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-  sort=sort[sort[,2]>variant_calling,]
-  sort=sort[sort[,2]!=sort[,3],]#check the same variants
-  sort=sort[sort[,3]<=variant_calling,]#filter non-biallelic
+  empty_res <- function(){
+    out=data.frame(matrix(nrow=0, ncol=19))
+    # Column structure after res=res[,2:19,drop=FALSE] and adding V3-V6:
+    # 1-5: do.A, do.T, do.C, do.G, d_max
+    # 6-9: re.A, re.T, re.C, re.G  
+    # 10: re.total_reads
+    # 11-13: shared_site columns (3 cols after processing)
+    # 14-18: sort columns or other intermediate columns
+    # 19: V6 (re.subdom_reads) - but V3-V6 are added as new columns, so actual structure may differ
+    # Based on usage in Prepared_matrix_for_methods: res[,14:19] contains do.dom, do.subdom, re.dom, re.subdom, re.dom_reads, re.subdom_reads
+    names(out)=c("do.A","do.T","do.C","do.G","d_max",
+                 "re.A","re.T","re.C","re.G","re.total_reads",
+                 "shared_site1","shared_site2","shared_site3",
+                 "do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads")
+    out
+  }
+  if(nrow(mix)==0){ return(empty_res()) }
+  donor=mix[,1:4,drop=FALSE]
+  # When only one row, apply(...,1,...) returns a vector -> t() gives 4x1; we need 1x4 with row names
+  if(nrow(donor)==1){
+    sort=matrix(sort(as.numeric(donor[1,]),decreasing=TRUE),nrow=1)
+    rownames(sort)=rownames(donor)
+  } else {
+    sort=t(apply(donor,1,sort,decreasing=TRUE))
+  }
+  sort=sort[sort[,2]>variant_calling,,drop=FALSE]
+  if(nrow(sort)==0){ return(empty_res()) }
+  sort=sort[sort[,2]!=sort[,3],,drop=FALSE]
+  if(nrow(sort)==0){ return(empty_res()) }
+  sort=sort[sort[,3]<=variant_calling,,drop=FALSE]
+  if(nrow(sort)==0){ return(empty_res()) }
   res=merge(mix,sort,by.x=0,by.y=0)
   row.names(res)=res[,1]
-  res=res[,2:18]
-  res[,"V3"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_dominant_in_recipient)
-  res[,"V4"]=apply(cbind.data.frame(res[,1:4],res[,6:9],res[,14:15]),1,find_variant_in_recipient)
-  res$V5=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_dominant_in_recipient)
-  res$V6=apply(cbind.data.frame(res[,1:4],res[,10:13],res[,14:15]),1,find_variant_in_recipient)
+  res=res[,2:19,drop=FALSE]
+  cb1=cbind.data.frame(res[,1:4,drop=FALSE],res[,6:9,drop=FALSE],res[,15:16,drop=FALSE])
+  res[,"V3"]=apply(cb1,1,find_dominant_in_recipient)
+  res[,"V4"]=apply(cb1,1,find_variant_in_recipient)
+  cb2=cbind.data.frame(res[,1:4,drop=FALSE],res[,11:14,drop=FALSE],res[,15:16,drop=FALSE])
+  res$V5=apply(cb2,1,find_dominant_in_recipient)
+  res$V6=apply(cb2,1,find_variant_in_recipient)
   return(res)
 }
 
@@ -71,37 +100,76 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_c
 #filter the variants which would not be distinguished from errors.
 Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,variant_calling){
   res=Create_matrix_for_biallelic(shared_sites_table,tidy_sites_table,variant_calling)
-  res_info=res[,14:19]
+  if(nrow(res)==0){
+    warning("No biallelic sites passed filters; returning empty prepared matrix.")
+    res_info=res[,14:19,drop=FALSE]
+    names(res_info)=c("do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads")
+    res_info$re.total_reads=numeric(0)
+    prepared_matrix=cbind.data.frame(res[,1:13,drop=FALSE],res_info)
+    return(prepared_matrix)
+  }
+  if(nrow(res)==1){
+    warning("Only one variant site is available; bottleneck size estimation with a single site is unreliable.")
+  }
+  # Report recipient bases that appear but donor has zero (re.A/T/C/G present where do.A/T/C/G absent)
+  do_bases=res[,1:4,drop=FALSE]
+  re_bases=res[,6:9,drop=FALSE]
+  base_names=c("A","T","C","G")
+  for(j in seq_len(4)){
+    re_has_do_not=which(re_bases[,j]>0 & do_bases[,j]<=0)
+    if(length(re_has_do_not)>0){
+      site_ids=paste(rownames(res)[re_has_do_not],collapse=", ")
+      warning("Recipient has base '", base_names[j], "' (non-zero reads) at site(s) where donor has none: ", site_ids)
+    }
+  }
+  res_info=res[,14:19,drop=FALSE]
   names(res_info)=c("do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads")
-  prepared_matrix=cbind.data.frame(res[,1:13],res_info)
+  # re.total_reads = sum of 4 base reads, computed in tidy_up_shared_sites_table (res[,10]); avoids 0 when dom+subdom=0 (base totally switched)
+  res_info$re.total_reads=res[,10]
+  prepared_matrix=cbind.data.frame(res[,1:13,drop=FALSE],res_info)
   return(prepared_matrix)
 }
 
 
 Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
-  App_matrix=cbind.data.frame(prepared_matrix[,15],prepared_matrix[,17])
+  App_matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,17,drop=FALSE])
   return(App_matrix)
 }
 
 Convert_to_Exact_method_matrix<- function(prepared_matrix){
-  matrix=cbind.data.frame(prepared_matrix[,15],prepared_matrix[,18:19])
-  matrix$sum=rowSums(matrix[,2:3])
-  Exact_matix=cbind.data.frame(matrix[,1],matrix[,3:4])
+  # re.total_reads (column 20) is pre-computed in Prepared_matrix_for_methods
+  matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,18:19,drop=FALSE],prepared_matrix[,20,drop=FALSE])
+  Exact_matix=cbind.data.frame(matrix[,1,drop=FALSE],matrix[,3:4,drop=FALSE])
   return(Exact_matix)
 }
 
 Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
-  donor=mix[,1:4]
+  if(nrow(mix)==0){
+    out=data.frame(matrix(nrow=0, ncol=ncol(tidy_shared_table)-2))
+    names(out)=names(tidy_shared_table)[-(1:2)]
+    return(out)
+  }
+  donor=mix[,1:4,drop=FALSE]
   #if error filtering is delete it should be delete
   for(i in 1:8){
     tidy_shared_table[,i][tidy_shared_table[,i]<variant_calling]=0
   }
-  sort=t(apply(donor,1,sort,decreasing=TRUE))#sort to find dominant and variant
-  sort=sort[sort[,2]>variant_calling,] #filtered the no-variation sites
-  var_sites=merge(sort[,1:2],tidy_shared_table,by="row.names")
+  if(nrow(donor)==1){
+    sort=matrix(sort(as.numeric(donor[1,]),decreasing=TRUE),nrow=1)
+    rownames(sort)=rownames(donor)
+  } else {
+    sort=t(apply(donor,1,sort,decreasing=TRUE))
+  }
+  sort=sort[sort[,2]>variant_calling,,drop=FALSE] #filtered the no-variation sites
+  if(nrow(sort)==0){
+    out=data.frame(matrix(nrow=0, ncol=ncol(tidy_shared_table)-2))
+    names(out)=names(tidy_shared_table)[-(1:2)]
+    return(out)
+  }
+  var_sites=merge(sort[,1:2,drop=FALSE],tidy_shared_table,by="row.names")
   row.names(var_sites)=var_sites[,1]
-  var_sites=var_sites[,-(1:3)]
+  var_sites=var_sites[,-(1:3),drop=FALSE]
   return(var_sites)
 }
 

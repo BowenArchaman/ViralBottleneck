@@ -74,11 +74,14 @@ tidy_up_shared_sites_table <- function(shared_table,donor_depth_threshold, recip
   Donor=create_frequency_table(Donor,error_calling = error_calling)
   recipient=create_frequency_table(recipient,error_calling = error_calling)
   tidy_table=merge(Donor,recipient,by.x=0,by.y=0)
+  # Total recipient reads (sum of 4 bases), kept before dropping col 11; used for Exact method when dom+subdom=0 (base totally switched)
+  re_total_reads=tidy_table[,11]
   tidy_table=tidy_table[,-11]
   tidy_table=tidy_table[,-6]
   row.names(tidy_table)=tidy_table[,1]
   tidy_table=tidy_table[,-1]
   names(tidy_table)=c(paste0("do.",names(Donor)[1:4]),paste0("re.",names(recipient)[1:4]))
+  tidy_table$re.total_reads=re_total_reads
   return(tidy_table)
 }
 
