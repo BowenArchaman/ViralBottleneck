@@ -150,7 +150,12 @@ Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,vari
 
 
 Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
+  if(nrow(prepared_matrix)==0){
+    App_matrix=data.frame(do.subdom=numeric(0),re.subdom=numeric(0))
+    return(App_matrix)
+  }
   App_matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,17,drop=FALSE])
+  names(App_matrix)=c("do.subdom","re.subdom")
   return(App_matrix)
 }
 
@@ -211,7 +216,23 @@ find_fixed_variant_app_onerow <- function(row,variant_calling){
 }
 
 find_fixed_variant_app<- function(table,variant_calling){
+  if(nrow(table)==0){
+    out=data.frame(do.subdom=numeric(0),re.subdom=numeric(0))
+    return(out)
+  }
+  if(nrow(table)==1){
+    row=as.numeric(table[1,,drop=TRUE])
+    fixed=find_fixed_variant_app_onerow(row,variant_calling=variant_calling)
+    out=data.frame(do.subdom=fixed[1],re.subdom=fixed[2])
+    return(out)
+  }
   table=as.data.frame(t(apply(table,1,find_fixed_variant_app_onerow,variant_calling=variant_calling)))
+  if(ncol(table)>=2){
+    table=table[,1:2,drop=FALSE]
+    names(table)=c("do.subdom","re.subdom")
+  } else {
+    table=data.frame(do.subdom=numeric(0),re.subdom=numeric(0))
+  }
   return(table)
 }
 
@@ -293,9 +314,11 @@ Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
 #Beta-binomial Approximate verison
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
   table=find_fixed_variant_app(table,variant_calling)
-  table=subset(table,table[,1]>=variant_calling)
-  present=table[table[,2]>=variant_calling,]
-  absent=table[table[,2]<variant_calling,]
+  if(nrow(table)==0){ return(0) }
+  table=table[table[,1]>=variant_calling,,drop=FALSE]
+  if(nrow(table)==0){ return(0) }
+  present=table[table[,2]>=variant_calling,,drop=FALSE]
+  absent=table[table[,2]<variant_calling,,drop=FALSE]
   likelihood_vector_present=numeric(nrow(present))
   likelihood_vector_absent=numeric(nrow(absent))
   
@@ -327,6 +350,12 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
       add2=P2*pbinVd2
       likelihood_vector_absent=likelihood_vector_absent+add2
     }
+  }
+  if(length(likelihood_vector_present) > 0){
+    likelihood_vector_present[likelihood_vector_present <= 0] = 10^-9
+  }
+  if(length(likelihood_vector_absent) > 0){
+    likelihood_vector_absent[likelihood_vector_absent <= 0] = 10^-9
   }
   sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
   return(sum)
