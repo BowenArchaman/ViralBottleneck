@@ -285,6 +285,12 @@ find_fixed_variant_exact<- function(table,variant_calling){
 find_confidence_interval <- function(final_vector,Nbmin){
   final_vector=as.numeric(final_vector[1,])
   l_OK = is.finite(final_vector)
+  # If all likelihood values are non-finite, return fixed-length NA outputs
+  # so downstream table assembly never gets zero-length elements.
+  if(!any(l_OK)){
+    warning("All likelihood values are non-finite; confidence interval is unavailable.")
+    return(list(NA_real_, NA_real_, NA_real_))
+  }
   if(FALSE %in% l_OK){
     lowest_index=Nbmin
   }
@@ -299,8 +305,14 @@ find_confidence_interval <- function(final_vector,Nbmin){
   CI_high=which(final_vector==CI[length(CI)])+lowest_index
   CI_high=max(CI_high)
   if(is.na(CI[1])){
-    CI_low=max_index
-    CI_high=max_index+1
+    if(length(max_index)==0 || is.na(max_index)){
+      CI_low=NA_real_
+      CI_high=NA_real_
+      max_index=NA_real_
+    } else {
+      CI_low=max_index
+      CI_high=max_index+1
+    }
   }
   CI_list=list(CI_low,CI_high,max_index)
   return(CI_list)
