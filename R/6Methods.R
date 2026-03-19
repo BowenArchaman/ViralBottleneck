@@ -45,9 +45,13 @@ find_dominant_in_recipient <- function(row){
 }
 
 find_variant_in_recipient <- function(row){
+  # Floating-point comparison can fail exact equality; always return one scalar.
   index=which(row[1:4]==row[10])
-  variant=row[index+4]
-  return(variant)
+  if(length(index)==0){
+    index=which.min(abs(row[1:4]-row[10]))
+  }
+  variant=row[index[1]+4]
+  return(as.numeric(variant))
 }
 
 Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_calling){
@@ -77,6 +81,7 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_c
   } else {
     sort=t(apply(donor,1,sort,decreasing=TRUE))
   }
+  if(ncol(sort) < 3){ return(empty_res()) }
   sort=sort[sort[,2]>variant_calling,,drop=FALSE]
   if(nrow(sort)==0){ return(empty_res()) }
   sort=sort[sort[,2]!=sort[,3],,drop=FALSE]
@@ -87,11 +92,11 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_c
   row.names(res)=res[,1]
   res=res[,2:19,drop=FALSE]
   cb1=cbind.data.frame(res[,1:4,drop=FALSE],res[,6:9,drop=FALSE],res[,15:16,drop=FALSE])
-  res[,"V3"]=apply(cb1,1,find_dominant_in_recipient)
-  res[,"V4"]=apply(cb1,1,find_variant_in_recipient)
+  res[,"V3"]=vapply(seq_len(nrow(cb1)), function(i) find_dominant_in_recipient(as.numeric(cb1[i,])), numeric(1))
+  res[,"V4"]=vapply(seq_len(nrow(cb1)), function(i) find_variant_in_recipient(as.numeric(cb1[i,])), numeric(1))
   cb2=cbind.data.frame(res[,1:4,drop=FALSE],res[,11:14,drop=FALSE],res[,15:16,drop=FALSE])
-  res$V5=apply(cb2,1,find_dominant_in_recipient)
-  res$V6=apply(cb2,1,find_variant_in_recipient)
+  res$V5=vapply(seq_len(nrow(cb2)), function(i) find_dominant_in_recipient(as.numeric(cb2[i,])), numeric(1))
+  res$V6=vapply(seq_len(nrow(cb2)), function(i) find_variant_in_recipient(as.numeric(cb2[i,])), numeric(1))
   return(res)
 }
 
