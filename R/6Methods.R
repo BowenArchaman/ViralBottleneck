@@ -358,8 +358,15 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   if(nrow(table)==0){ return(0) }
   table=table[table[,1]>=variant_calling,,drop=FALSE]
   if(nrow(table)==0){ return(0) }
-  present=table[table[,2]>=variant_calling,,drop=FALSE]
-  absent=table[table[,2]<variant_calling,,drop=FALSE]
+  # variant_calling==0: ">=0" would put every site (including re.subdom==0) in "present",
+  # forcing dbeta(0, alpha, Beta) which is Inf when shape < 1 — corrupts the likelihood curve.
+  if (variant_calling == 0) {
+    present <- table[table[,2] > 0, , drop = FALSE]
+    absent <- table[table[,2] <= 0, , drop = FALSE]
+  } else {
+    present <- table[table[,2] >= variant_calling, , drop = FALSE]
+    absent <- table[table[,2] < variant_calling, , drop = FALSE]
+  }
   if(k == 1){
     message("[DEBUG Approx] one_Nbval k=1 table dim=", nrow(table), "x", ncol(table),
             " present=", nrow(present), " absent=", nrow(absent))
@@ -397,10 +404,10 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
     }
   }
   if(length(likelihood_vector_present) > 0){
-    likelihood_vector_present[likelihood_vector_present <= 0] = 10^-9
+    likelihood_vector_present[likelihood_vector_present <= 0 | !is.finite(likelihood_vector_present)] = 10^-9
   }
   if(length(likelihood_vector_absent) > 0){
-    likelihood_vector_absent[likelihood_vector_absent <= 0] = 10^-9
+    likelihood_vector_absent[likelihood_vector_absent <= 0 | !is.finite(likelihood_vector_absent)] = 10^-9
   }
   sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
   return(sum)
