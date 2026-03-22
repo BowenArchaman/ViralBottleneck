@@ -351,6 +351,10 @@ Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
 }
 
 #Beta-binomial Approximate verison
+# When user passes variant_calling=0, Range_function_Approximate replaces it with VC_APPROX_ZERO_FLOOR
+# (below typical error_calling) so present/absent and pbeta() avoid pathological zeros.
+VC_APPROX_ZERO_FLOOR <- 1e-15
+
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
   table=find_fixed_variant_app(table,variant_calling)
   if(ncol(table) < 2){ return(0) }
@@ -358,33 +362,30 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   if(nrow(table)==0){ return(0) }
   table=table[table[,1]>=variant_calling,,drop=FALSE]
   if(nrow(table)==0){ return(0) }
-  # variant_calling==0: ">=0" would put every site (including re.subdom==0) in "present",
-  # forcing dbeta(0, alpha, Beta) which is Inf when shape < 1 — corrupts the likelihood curve.
-  if (variant_calling == 0) {
-    present <- table[table[,2] > 0, , drop = FALSE]
-    absent <- table[table[,2] <= 0, , drop = FALSE]
-  } else {
-    present <- table[table[,2] >= variant_calling, , drop = FALSE]
-    absent <- table[table[,2] < variant_calling, , drop = FALSE]
-  }
+  present <- table[table[,2] >= variant_calling, , drop = FALSE]
+  absent <- table[table[,2] < variant_calling, , drop = FALSE]
   if(k == 1){
     message("[DEBUG Approx] one_Nbval k=1 table dim=", nrow(table), "x", ncol(table),
             " present=", nrow(present), " absent=", nrow(absent))
   }
   likelihood_vector_present=numeric(nrow(present))
   likelihood_vector_absent=numeric(nrow(absent))
+  # dbeta(0|1, shape<1) is Inf; Inf*0 from dbinom gives NaN — scrub per term and clamp x into (0,1).
+  beta_x_eps <- 1e-12
   
   # present variants
   if(nrow(present) != 0){
+    p_re <- pmin(pmax(as.numeric(present[,2]), beta_x_eps), 1 - beta_x_eps)
     for(i in 0:k){
       alpha=i
       Beta=(k-i)
       # avoid zero-shape parameters for Beta distribution
       if(alpha==0){alpha=10^-9}
       if(Beta==0){Beta=10^-9}
-      P1=dbeta(present[,2], alpha, Beta)
+      P1=dbeta(p_re, alpha, Beta)
       pbinVd1=dbinom(i, size=k, prob=present[,1])
       add1=P1*pbinVd1
+      add1[!is.finite(add1) | add1 < 0] <- 0
       likelihood_vector_present=likelihood_vector_present+add1
     }
   }
@@ -400,6 +401,7 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
       P2=pbeta(variant_calling, alpha, Beta)
       pbinVd2=dbinom(j, size=k, prob=absent[,1])
       add2=P2*pbinVd2
+      add2[!is.finite(add2) | add2 < 0] <- 0
       likelihood_vector_absent=likelihood_vector_absent+add2
     }
   }
@@ -410,10 +412,22 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
     likelihood_vector_absent[likelihood_vector_absent <= 0 | !is.finite(likelihood_vector_absent)] = 10^-9
   }
   sum=sum(log(likelihood_vector_present))+sum(log(likelihood_vector_absent))
+  if (!is.finite(sum)) {
+    return(-1e200)
+  }
   return(sum)
 }
 
 Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
+  if (variant_calling == 0) {
+    warning(
+      "variant_calling is 0: using internal floor ",
+      VC_APPROX_ZERO_FLOOR,
+      " for Beta-binomial Approximate (below typical error_calling). ",
+      "Set variant_calling to match your sequencing error model if you need an explicit threshold."
+    )
+    variant_calling <- VC_APPROX_ZERO_FLOOR
+  }
   message("[DEBUG Approx] Range_function_Approximate input dim=",
           nrow(table), "x", ncol(table),
           " Nbmin=", Nbmin, " Nbmax=", Nbmax,
