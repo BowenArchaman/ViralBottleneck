@@ -351,9 +351,10 @@ Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
 }
 
 #Beta-binomial Approximate verison
-# When user passes variant_calling=0, Range_function_Approximate replaces it with VC_APPROX_ZERO_FLOOR
-# (below typical error_calling) so present/absent and pbeta() avoid pathological zeros.
-VC_APPROX_ZERO_FLOOR <- 1e-15
+# When user passes variant_calling=0, Range_function_Approximate replaces it with VC_APPROX_ZERO_FLOOR.
+# Use a small positive value well *below* typical calling thresholds (often 1e-3 to 1e-2) but large
+# enough for stable dbeta/pbeta; 1e-15 was still too small for some datasets (Inf likelihoods).
+VC_APPROX_ZERO_FLOOR <- 1e-4
 
 one_Nbval_function_Approximate<- function(k,table,variant_calling){
   table=find_fixed_variant_app(table,variant_calling)
@@ -370,8 +371,8 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   }
   likelihood_vector_present=numeric(nrow(present))
   likelihood_vector_absent=numeric(nrow(absent))
-  # dbeta(0|1, shape<1) is Inf; Inf*0 from dbinom gives NaN — scrub per term and clamp x into (0,1).
-  beta_x_eps <- 1e-12
+  # Clamp recipient proportion away from 0/1 before dbeta() (same scale as VC_APPROX_ZERO_FLOOR).
+  beta_x_eps <- VC_APPROX_ZERO_FLOOR
   
   # present variants
   if(nrow(present) != 0){
@@ -768,28 +769,37 @@ get_from_in_object <- function(transmission_ob,transmission_pairs){
 
 
 
-plot_likelihood_function <- function(id,final_likelihood_vector,confidence_res,method){
-  plot_name=paste0(id,"_",method,"_","plot.png")
-  table_final_likelihood_vector=rbind.data.frame(final_likelihood_vector,names(final_likelihood_vector))
-  x=t(table_final_likelihood_vector)
-  x=data.frame(x)
-  
-  # Export likelihood vector matching the plot
+plot_likelihood_function <- function(id,final_likelihood_vector,confidence_res,method,output_dir="."){
+  if(!dir.exists(output_dir)){
+    dir.create(output_dir, recursive = TRUE)
+  }
+  plot_name=file.path(output_dir,paste0(id,"_",method,"_","plot.png"))
+  # Build plot table directly from one-row likelihood vector.
+  Nb_vals=as.numeric(names(final_likelihood_vector))
+  ll_vals=as.numeric(final_likelihood_vector[1,])
   likelihood_export=data.frame(
-    Nb=as.numeric(x$X2),
-    log_likelihood=as.numeric(x$X1)
+    Nb=Nb_vals,
+    log_likelihood=ll_vals
   )
-  likelihood_file=paste0(id,"_",method,"_","likelihood.csv")
+  likelihood_export=likelihood_export[is.finite(likelihood_export$Nb),,drop=FALSE]
+  likelihood_export=likelihood_export[order(likelihood_export$Nb),,drop=FALSE]
+  likelihood_file=file.path(output_dir,paste0(id,"_",method,"_","likelihood.csv"))
   write.csv(likelihood_export,likelihood_file,row.names = FALSE)
   
   png(plot_name)
-  ggp<-ggplot(x,aes(x=as.numeric(X2),y=as.numeric(X1)))+
+  ggp<-ggplot(likelihood_export,aes(x=Nb,y=log_likelihood))+
     xlab("Nb")+ylab("log-likelihood")+geom_line(col="darkorange2",linewidth=1.5)+
-    geom_vline(xintercept=confidence_res[[3]],col="red",linewidth=0.5) +
-    annotate("rect",xmin=confidence_res[[1]], xmax=confidence_res[[2]], ymin=-Inf, ymax=Inf,alpha=.2,fill="yellow")+
     theme_bw()
+  if(length(confidence_res) >= 3 && is.finite(confidence_res[[3]])){
+    ggp <- ggp + geom_vline(xintercept=confidence_res[[3]],col="red",linewidth=0.5)
+  }
+  if(length(confidence_res) >= 2 && is.finite(confidence_res[[1]]) && is.finite(confidence_res[[2]])){
+    ggp <- ggp + annotate("rect",xmin=confidence_res[[1]], xmax=confidence_res[[2]], ymin=-Inf, ymax=Inf,alpha=.2,fill="yellow")
+  }
   print(ggp)
   dev.off()
+  message("Saved plot: ", normalizePath(plot_name, winslash = "/", mustWork = FALSE))
+  message("Saved likelihood CSV: ", normalizePath(likelihood_file, winslash = "/", mustWork = FALSE))
 }
 #############################################################################################
 #check directory exist
@@ -852,9 +862,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     Nb=list(res[[3]],res[[1]],res[[2]])
     if(plot==TRUE){
       dir_name=paste0(transmisson_id,"_plot")
-      check_dir(dir_name)
-      plot_likelihood_function(transmisson_id,v,res,method)
-      setwd('..')
+      plot_likelihood_function(transmisson_id,v,res,method,output_dir=dir_name)
     }
     return(Nb)
   }
@@ -880,9 +888,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     Nb=list(res[[3]],res[[1]],res[[2]])
     if(plot==TRUE){
       dir_name=paste0(transmisson_id,"_plot")
-      check_dir(dir_name)
-      plot_likelihood_function(transmisson_id,v,res,method)
-      setwd('..')
+      plot_likelihood_function(transmisson_id,v,res,method,output_dir=dir_name)
     }
     return(Nb)
   }
@@ -894,9 +900,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     Nb=list(res[[3]],res[[1]],res[[2]])
     if(plot==TRUE){
       dir_name=paste0(transmisson_id,"_plot")
-      check_dir(dir_name)
-      plot_likelihood_function(transmisson_id,v,res,method)
-      setwd('..')
+      plot_likelihood_function(transmisson_id,v,res,method,output_dir=dir_name)
     }
     return(Nb)
   }
@@ -907,9 +911,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     Nb=list(res[[3]],res[[1]],res[[2]])
     if(plot==TRUE){
       dir_name=paste0(transmisson_id,"_plot")
-      check_dir(dir_name)
-      plot_likelihood_function(transmisson_id,v,res,method)
-      setwd('..')
+      plot_likelihood_function(transmisson_id,v,res,method,output_dir=dir_name)
     }
     return(Nb)
   }
@@ -920,9 +922,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
     Nb=list(res[[3]],res[[1]],res[[2]])
     if(plot==TRUE){
       dir_name=paste0(transmisson_id,"_plot")
-      check_dir(dir_name)
-      plot_likelihood_function(transmisson_id,v,res,method)
-      setwd('..')
+      plot_likelihood_function(transmisson_id,v,res,method,output_dir=dir_name)
     }
     return(Nb)
   }
@@ -994,6 +994,11 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
 Bottleneck_size_Calculation <- function(transmission_ob,method,plot=FALSE,show_table=FALSE,transmission_pairs=NULL,donor_depth_threshold=10, recipient_depth_threshold=10,error_filtering=0,log=FALSE,variant_calling=0.03,Nbmin=1,Nbmax=1000,NonSyn_or_Syn="All"){
   method_list=c("KL","Presence-Absence","Binomial","Beta_binomial_Approximate","Beta_binomial_Exact","Wright-Fisher")
   if(method%in%method_list==FALSE){stop("Please choose valid methods (KL,Presence-Absence,Binomial,Beta_binomial_Approximate,Beta_binomial_Exact,Wright-Fisher)!")}
+  if(isTRUE(plot)){
+    message("Plot output root directory: ", normalizePath(getwd(), winslash = "/", mustWork = FALSE))
+  } else {
+    message("plot=FALSE, no plot files will be produced.")
+  }
   if(is.null(transmission_pairs)){
     ob=transmission_ob
     }
@@ -1006,7 +1011,6 @@ Bottleneck_size_Calculation <- function(transmission_ob,method,plot=FALSE,show_t
   if(log==TRUE && method != "Wright-Fisher"){
     check_file(paste0(log_dir,".csv"))
     write.csv(log_table,paste0(log_dir,".csv"))
-    setwd('..')
   }
   if(method != "Wright-Fisher"){
     N_bs=lapply(ob, one_transmission_pair_process,method=method,donor_depth_threshold=donor_depth_threshold, recipient_depth_threshold=recipient_depth_threshold,error_calling=error_filtering,plot=plot,log=log,log_dir_name=log_dir,variant_calling=variant_calling,Nbmin=Nbmin,Nbmax=Nbmax,NonSyn_or_Syn=NonSyn_or_Syn)
