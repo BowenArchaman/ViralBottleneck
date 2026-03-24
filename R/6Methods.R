@@ -67,14 +67,6 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_c
   }
   if(nrow(mix)==0){ return(empty_res()) }
   donor=mix[,1:4,drop=FALSE]
-  # Explicitly exclude monomorphic donor sites before downstream sorting logic.
-  # Keep sites with at least two donor bases above the calling threshold.
-  # When variant_calling == 0, this means at least two non-zero donor bases.
-  donor_poly_n=rowSums(donor > variant_calling, na.rm=TRUE)
-  keep_poly=which(donor_poly_n >= 2)
-  if(length(keep_poly)==0){ return(empty_res()) }
-  mix=mix[keep_poly,,drop=FALSE]
-  donor=donor[keep_poly,,drop=FALSE]
   # When only one row, apply(...,1,...) returns a vector -> t() gives 4x1; we need 1x4 with row names
   if(nrow(donor)==1){
     sort=matrix(sort(as.numeric(donor[1,]),decreasing=TRUE),nrow=1)
@@ -133,18 +125,6 @@ Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,vari
   # re.total_reads = sum of 4 base reads, computed in tidy_up_shared_sites_table (res[,10]); avoids 0 when dom+subdom=0 (base totally switched)
   res_info$re.total_reads=res[,10]
   prepared_matrix=cbind.data.frame(res[,1:13,drop=FALSE],res_info)
-  # Extra guard for downstream beta-binomial: exclude donor-monomorphic/degenerate sites.
-  # For variant_calling==0, require do.subdom>0; otherwise require do.subdom>=variant_calling.
-  subdom_cutoff=max(variant_calling, 0)
-  if(variant_calling == 0){
-    prepared_matrix=prepared_matrix[prepared_matrix$do.subdom > subdom_cutoff,,drop=FALSE]
-  } else {
-    prepared_matrix=prepared_matrix[prepared_matrix$do.subdom >= subdom_cutoff,,drop=FALSE]
-  }
-  if(nrow(prepared_matrix)==0){
-    warning("No polymorphic donor sites remain after do.subdom filtering; returning empty prepared matrix.")
-    return(prepared_matrix)
-  }
   return(prepared_matrix)
 }
 
