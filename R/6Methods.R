@@ -11,6 +11,9 @@
 #' @importFrom ggplot2 geom_vline
 #' @importFrom ggplot2 theme_bw
 
+# KL: floor for exact zeros in log-ratios and for per-base frequencies below variant_calling; see Create_variant_identificatin_forKL.
+KL_FREQ_FLOOR <- 1e-9
+
 #Tidy table, check coverage, error_calling, depth_threshold(donor,recipient) one transmission pair
 Before_calculation_table<-function(one_pair,donor_depth_threshold, recipient_depth_threshold,error_calling,NonSyn_or_Syn){
   table=Create_shared_variant_site_table(transmission_pair = one_pair,NonSyn_or_Syn=NonSyn_or_Syn)
@@ -215,13 +218,34 @@ Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,va
   orig[!is.finite(orig)] <- 0
   max_do <- apply(orig[, 1:4, drop = FALSE], 1L, max)
   max_re <- apply(orig[, 5:8, drop = FALSE], 1L, max)
-  keep <- max_do > vc & max_re > vc
+  # Drop a site only if all four donor bases are strictly below vc, or all four recipient bases are.
+  # Otherwise keep the site and only replace sub-threshold bases with KL_FREQ_FLOOR (then renormalize).
+  if(vc > 0){
+    keep <- (max_do >= vc) & (max_re >= vc)
+  } else {
+    keep <- (max_do > 0) & (max_re > 0)
+  }
   # Frequencies below variant_calling are replaced with KL_FREQ_FLOOR (not 0) so KL ratios stay finite.
   for(j in seq_len(8)){
     v <- kl_tab[[j]]
     v[!is.finite(v)] <- 0
     v[v < vc] <- KL_FREQ_FLOOR
     kl_tab[[j]] <- v
+  }
+  # After flooring, donor and recipient 4-base vectors must sum to 1 again for KL on compositional data.
+  if(nrow(kl_tab) > 0){
+    dmat <- as.matrix(kl_tab[, 1:4, drop = FALSE])
+    rmat <- as.matrix(kl_tab[, 5:8, drop = FALSE])
+    storage.mode(dmat) <- "double"
+    storage.mode(rmat) <- "double"
+    dmat[dmat < 0] <- 0
+    rmat[rmat < 0] <- 0
+    sd <- rowSums(dmat)
+    sr <- rowSums(rmat)
+    dmat <- dmat / pmax(sd, .Machine$double.eps)
+    rmat <- rmat / pmax(sr, .Machine$double.eps)
+    kl_tab[, 1:4] <- dmat
+    kl_tab[, 5:8] <- rmat
   }
   kl_tab <- kl_tab[keep,,drop=FALSE]
   return(kl_tab)
@@ -332,9 +356,7 @@ find_confidence_interval <- function(final_vector,Nbmin){
   return(CI_list)
 }
 ######################################method 
-#KL 
-# Floor for near-zero allele frequencies in KL (log ratios); also used for bases < variant_calling in Create_variant_identificatin_forKL.
-KL_FREQ_FLOOR <- 1e-9
+#KL (KL_FREQ_FLOOR at top of file)
 
 KL_shared_table <- function(shared_site_table){
   sum=0
