@@ -193,38 +193,38 @@ Convert_to_Exact_method_matrix<- function(prepared_matrix){
 }
 
 Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
-  mix=create_max_f(shared_table,tidy_shared_table)
-  if(nrow(mix)==0){
-    # Return 8 columns: do.A, do.T, do.C, do.G, re.A, re.T, re.C, re.G (exclude re.total_reads)
-    out=data.frame(matrix(nrow=0, ncol=8))
-    names(out)=c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G")
-    return(out)
+  # KL method (Emmett et al.): use full allele-frequency vectors (4 bases donor + 4 recipient).
+  # Do not require donor biallelic sites — use all shared tidy sites with signal on both sides.
+  req <- c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G")
+  empty_kl <- function(){
+    out <- data.frame(matrix(nrow=0, ncol=8))
+    names(out) <- req
+    out
   }
-  donor=mix[,1:4,drop=FALSE]
-  #if error filtering is delete it should be delete
-  # tidy_shared_table has 9 columns: do.A(1), do.T(2), do.C(3), do.G(4), re.A(5), re.T(6), re.C(7), re.G(8), re.total_reads(9)
-  for(i in 1:8){
-    tidy_shared_table[,i][tidy_shared_table[,i]<variant_calling]=0
+  if(is.null(tidy_shared_table) || nrow(tidy_shared_table)==0){
+    return(empty_kl())
   }
-  if(nrow(donor)==1){
-    sort=matrix(sort(as.numeric(donor[1,]),decreasing=TRUE),nrow=1)
-    rownames(sort)=rownames(donor)
-  } else {
-    sort=t(apply(donor,1,sort,decreasing=TRUE))
+  if(!all(req %in% names(tidy_shared_table))){
+    warning("KL input: tidy table missing expected base columns; returning empty site table.")
+    return(empty_kl())
   }
-  sort=sort[sort[,2]>variant_calling,,drop=FALSE] #filtered the no-variation sites
-  if(nrow(sort)==0){
-    # Return 8 columns: do.A, do.T, do.C, do.G, re.A, re.T, re.C, re.G (exclude re.total_reads)
-    out=data.frame(matrix(nrow=0, ncol=8))
-    names(out)=c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G")
-    return(out)
+  kl_tab <- tidy_shared_table[, req, drop=FALSE]
+  vc <- suppressWarnings(as.numeric(variant_calling)[1])
+  if(!is.finite(vc) || vc < 0) vc <- 0
+  orig <- as.matrix(kl_tab)
+  orig[!is.finite(orig)] <- 0
+  max_do <- apply(orig[, 1:4, drop = FALSE], 1L, max)
+  max_re <- apply(orig[, 5:8, drop = FALSE], 1L, max)
+  keep <- max_do > vc & max_re > vc
+  # Frequencies below variant_calling are replaced with KL_FREQ_FLOOR (not 0) so KL ratios stay finite.
+  for(j in seq_len(8)){
+    v <- kl_tab[[j]]
+    v[!is.finite(v)] <- 0
+    v[v < vc] <- KL_FREQ_FLOOR
+    kl_tab[[j]] <- v
   }
-  var_sites=merge(sort[,1:2,drop=FALSE],tidy_shared_table,by="row.names")
-  row.names(var_sites)=var_sites[,1]
-  var_sites=var_sites[,-(1:3),drop=FALSE]
-  # Return only first 8 columns (exclude re.total_reads which is column 9)
-  var_sites=var_sites[,1:8,drop=FALSE]
-  return(var_sites)
+  kl_tab <- kl_tab[keep,,drop=FALSE]
+  return(kl_tab)
 }
 
 
@@ -333,13 +333,16 @@ find_confidence_interval <- function(final_vector,Nbmin){
 }
 ######################################method 
 #KL 
+# Floor for near-zero allele frequencies in KL (log ratios); also used for bases < variant_calling in Create_variant_identificatin_forKL.
+KL_FREQ_FLOOR <- 1e-9
+
 KL_shared_table <- function(shared_site_table){
   sum=0
   for(i in 1:4){
     q=shared_site_table[,i]
     p=shared_site_table[,i+4]
-    p[p == 0] <- 1e-9
-    q[q == 0] <- 1e-9
+    p[p == 0] <- KL_FREQ_FLOOR
+    q[q == 0] <- KL_FREQ_FLOOR
     ratio=p/q
     add=p*log2(ratio)
     sum=sum+add
