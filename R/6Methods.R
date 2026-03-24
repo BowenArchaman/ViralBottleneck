@@ -233,11 +233,8 @@ find_fixed_variant_app_onerow <- function(row,variant_calling){
 }
 
 find_fixed_variant_app<- function(table,variant_calling){
-  message("[DEBUG Approx] find_fixed_variant_app input dim=", nrow(table), "x", ncol(table),
-          " variant_calling=", variant_calling)
   if(nrow(table)==0){
     out=data.frame(do.subdom=numeric(0),re.subdom=numeric(0))
-    message("[DEBUG Approx] find_fixed_variant_app output dim=0x2")
     return(out)
   }
   if(nrow(table)==1){
@@ -252,7 +249,6 @@ find_fixed_variant_app<- function(table,variant_calling){
       return(out)
     }
     out=data.frame(do.subdom=fixed[1],re.subdom=fixed[2])
-    message("[DEBUG Approx] find_fixed_variant_app output dim=", nrow(out), "x", ncol(out))
     return(out)
   }
   if(ncol(table) < 2){
@@ -266,7 +262,6 @@ find_fixed_variant_app<- function(table,variant_calling){
   } else {
     table=data.frame(do.subdom=numeric(0),re.subdom=numeric(0))
   }
-  message("[DEBUG Approx] find_fixed_variant_app output dim=", nrow(table), "x", ncol(table))
   return(table)
 }
 
@@ -372,10 +367,6 @@ one_Nbval_function_Approximate<- function(k,table,variant_calling){
   if(nrow(table)==0){ return(0) }
   present <- table[table[,2] >= variant_calling, , drop = FALSE]
   absent <- table[table[,2] < variant_calling, , drop = FALSE]
-  if(k == 1){
-    message("[DEBUG Approx] one_Nbval k=1 table dim=", nrow(table), "x", ncol(table),
-            " present=", nrow(present), " absent=", nrow(absent))
-  }
   likelihood_vector_present=numeric(nrow(present))
   likelihood_vector_absent=numeric(nrow(absent))
   # Clamp recipient proportion away from 0/1 before dbeta() (same scale as VC_APPROX_ZERO_FLOOR).
@@ -436,10 +427,6 @@ Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
     )
     variant_calling <- VC_APPROX_ZERO_FLOOR
   }
-  message("[DEBUG Approx] Range_function_Approximate input dim=",
-          nrow(table), "x", ncol(table),
-          " Nbmin=", Nbmin, " Nbmax=", Nbmax,
-          " variant_calling=", variant_calling)
   res_list=pblapply(Nbmin:Nbmax,one_Nbval_function_Approximate,variant_calling=variant_calling,table=table)
   print(paste(nrow(table),"sites were used in calculation"))
   final_likelihood_vector=data.frame(res_list)
@@ -878,21 +865,7 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   }
 
   if(method=="Beta_binomial_Approximate"){
-    message("[DEBUG Approx] pair=", transmisson_id,
-            " prepared_matrix dim=", nrow(table), "x", ncol(table),
-            " variant_calling=", variant_calling)
     matrix_app=Convert_to_Approxmate_method_matrix(table)
-    message("[DEBUG Approx] pair=", transmisson_id,
-            " matrix_app dim=", nrow(matrix_app), "x", ncol(matrix_app))
-    if(nrow(matrix_app) > 0){
-      preview_n=min(5, nrow(matrix_app))
-      message("[DEBUG Approx] pair=", transmisson_id,
-              " first_", preview_n, "_rows=",
-              paste(
-                apply(round(matrix_app[1:preview_n,,drop=FALSE], 6), 1, function(x) paste0("(", x[1], ",", x[2], ")")),
-                collapse="; "
-              ))
-    }
     v=Range_function_Approximate(variant_calling=variant_calling ,table=matrix_app,Nbmin = Nbmin,Nbmax=Nbmax)
     res=find_confidence_interval(v,Nbmin=Nbmin)
     Nb=list(res[[3]],res[[1]],res[[2]])
