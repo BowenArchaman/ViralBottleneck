@@ -128,6 +128,31 @@ Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,vari
   return(prepared_matrix)
 }
 
+# For non-KL methods: remove sites where recipient has any base that donor does not have.
+# This targets de novo base appearance in recipient relative to donor.
+filter_denovo_sites_for_nonKL <- function(prepared_matrix){
+  if(nrow(prepared_matrix)==0){
+    return(prepared_matrix)
+  }
+  req_cols=c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G")
+  if(!all(req_cols %in% names(prepared_matrix))){
+    warning("de novo site filtering skipped: required columns are missing.")
+    return(prepared_matrix)
+  }
+  do_bases=prepared_matrix[,c("do.A","do.T","do.C","do.G"),drop=FALSE]
+  re_bases=prepared_matrix[,c("re.A","re.T","re.C","re.G"),drop=FALSE]
+  denovo_mask=rowSums((re_bases > 0) & (do_bases <= 0), na.rm=TRUE) > 0
+  if(any(denovo_mask)){
+    denovo_ids=rownames(prepared_matrix)[denovo_mask]
+    warning(
+      "Filtered ", length(denovo_ids), " site(s) for non-KL methods due to de novo recipient base(s): ",
+      paste(denovo_ids, collapse=", ")
+    )
+    prepared_matrix=prepared_matrix[!denovo_mask,,drop=FALSE]
+  }
+  return(prepared_matrix)
+}
+
 
 Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
   if(nrow(prepared_matrix)==0){
@@ -147,8 +172,10 @@ Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
 }
 
 Convert_to_Exact_method_matrix<- function(prepared_matrix){
-  # re.total_reads (column 20) is pre-computed in Prepared_matrix_for_methods
-  matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,18:19,drop=FALSE],prepared_matrix[,20,drop=FALSE])
+  # Legacy total-reads definition for Exact/Binomial:
+  # use recipient dominant + subdominant reads.
+  matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,18:19,drop=FALSE])
+  matrix$sum=rowSums(matrix[,2:3,drop=FALSE])
   Exact_matix=cbind.data.frame(matrix[,1,drop=FALSE],matrix[,3:4,drop=FALSE])
   return(Exact_matix)
 }
@@ -831,6 +858,9 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   shared_table=Create_shared_variant_site_table(one_pair,NonSyn_or_Syn=NonSyn_or_Syn)
   tidy_table = Before_calculation_table(one_pair,donor_depth_threshold = donor_depth_threshold, recipient_depth_threshold=recipient_depth_threshold,error_calling=error_calling,NonSyn_or_Syn=NonSyn_or_Syn)
   table=Prepared_matrix_for_methods(shared_table,tidy_table,variant_calling)
+  if(method != "KL"){
+    table=filter_denovo_sites_for_nonKL(table)
+  }
   if(log==TRUE){
    write.csv(table,paste0(transmisson_id,"_log.csv"),row.names = FALSE) 
   }
