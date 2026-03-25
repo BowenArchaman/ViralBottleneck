@@ -207,11 +207,36 @@ Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,va
   if(is.null(tidy_shared_table) || nrow(tidy_shared_table)==0){
     return(empty_kl())
   }
-  if(!all(req %in% names(tidy_shared_table))){
-    warning("KL input: tidy table missing expected base columns; returning empty site table.")
-    return(empty_kl())
+  # Primary path: expected tidy column names exist.
+  if(all(req %in% names(tidy_shared_table))){
+    kl_tab <- tidy_shared_table[, req, drop=FALSE]
+  } else {
+    # Fallback path: tolerate different column naming by selecting by prefix or by position.
+    do_cols <- grep("^do\\.", names(tidy_shared_table), value = TRUE)
+    re_cols <- grep("^re\\.", names(tidy_shared_table), value = TRUE)
+    if(length(do_cols) >= 4 && length(re_cols) >= 4){
+      # Prefer A/T/C/G order if present.
+      order_bases <- c("A","T","C","G")
+      do_letters <- sub("^do\\.", "", do_cols)
+      re_letters <- sub("^re\\.", "", re_cols)
+      do_sel <- sapply(order_bases, function(b) do_cols[do_letters == b][1])
+      re_sel <- sapply(order_bases, function(b) re_cols[re_letters == b][1])
+      if(any(is.na(do_sel)) || any(is.na(re_sel))){
+        # Last resort: first 4 columns by occurrence.
+        do_sel <- do_cols[1:4]
+        re_sel <- re_cols[1:4]
+      }
+      kl_tab <- tidy_shared_table[, c(do_sel, re_sel), drop=FALSE]
+      names(kl_tab) <- req
+    } else if(ncol(tidy_shared_table) >= 8){
+      # Last-resort: assume tidy layout is donor4 then recipient4.
+      kl_tab <- tidy_shared_table[, c(1:4, 5:8), drop=FALSE]
+      names(kl_tab) <- req
+    } else {
+      warning("KL input: tidy table missing base columns and cannot be inferred; returning empty site table.")
+      return(empty_kl())
+    }
   }
-  kl_tab <- tidy_shared_table[, req, drop=FALSE]
   vc <- suppressWarnings(as.numeric(variant_calling)[1])
   if(!is.finite(vc) || vc < 0) vc <- 0
   # KL 不删除位点：只对低于 variant_calling 的碱基频率做下限替换（避免 0/Inf），并在每侧做归一化。
@@ -880,6 +905,9 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   
   if(method == "KL"){
     KL_tidy_table=Create_variant_identificatin_forKL(shared_table, tidy_table,variant_calling)
+    if(nrow(KL_tidy_table)==0){
+      warning("KL: 0 sites will be used. tidy_table rows=", nrow(tidy_table))
+    }
     v=Range_function_KL(KL_tidy_table,Nbmin,Nbmax)
     res=find_confidence_interval(v,Nbmin=Nbmin)
     Nb=list(res[[3]],res[[1]],res[[2]])
