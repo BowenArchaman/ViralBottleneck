@@ -196,8 +196,8 @@ Convert_to_Exact_method_matrix<- function(prepared_matrix){
 }
 
 Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,variant_calling){
-  # KL method (Emmett et al.): use full allele-frequency vectors (4 bases donor + 4 recipient).
-  # Do not require donor biallelic sites — use all shared tidy sites with signal on both sides.
+  # KL (Emmett et al.): tidy proportions do.* / re.* (see tidy_up_shared_sites_table). Reference donor counts: debug_donor.csv
+  # (often one dominant A/T/C/G column; two alleles e.g. pos 1420). variant_calling is on proportions, not raw read counts.
   req <- c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G")
   empty_kl <- function(){
     out <- data.frame(matrix(nrow=0, ncol=8))
@@ -214,17 +214,7 @@ Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,va
   kl_tab <- tidy_shared_table[, req, drop=FALSE]
   vc <- suppressWarnings(as.numeric(variant_calling)[1])
   if(!is.finite(vc) || vc < 0) vc <- 0
-  orig <- as.matrix(kl_tab)
-  orig[!is.finite(orig)] <- 0
-  max_do <- apply(orig[, 1:4, drop = FALSE], 1L, max)
-  max_re <- apply(orig[, 5:8, drop = FALSE], 1L, max)
-  # Drop a site only if all four donor bases are strictly below vc, or all four recipient bases are.
-  # Otherwise keep the site and only replace sub-threshold bases with KL_FREQ_FLOOR (then renormalize).
-  if(vc > 0){
-    keep <- (max_do >= vc) & (max_re >= vc)
-  } else {
-    keep <- (max_do > 0) & (max_re > 0)
-  }
+  # KL 不删除位点：只对低于 variant_calling 的碱基频率做下限替换（避免 0/Inf），并在每侧做归一化。
   # Frequencies below variant_calling are replaced with KL_FREQ_FLOOR (not 0) so KL ratios stay finite.
   for(j in seq_len(8)){
     v <- kl_tab[[j]]
@@ -247,7 +237,6 @@ Create_variant_identificatin_forKL <- function(shared_table,tidy_shared_table,va
     kl_tab[, 1:4] <- dmat
     kl_tab[, 5:8] <- rmat
   }
-  kl_tab <- kl_tab[keep,,drop=FALSE]
   return(kl_tab)
 }
 
