@@ -394,8 +394,18 @@ Effective_bottleneck_size_KL <- function(k,shared_site_table){
 }
 
 Range_function_KL<-function(shared_site_table,Nbmin,Nbmax){
+  if(is.null(shared_site_table) || nrow(shared_site_table)==0){
+    na_vec <- rep(NA_real_, length(Nbmin:Nbmax))
+    final_likelihood_vector <- data.frame(na_vec)
+    name_v <- Nbmin:Nbmax
+    class(name_v) <- "character"
+    names(final_likelihood_vector) <- as.character(name_v)
+    return(final_likelihood_vector)
+  }
   likelihood_vector=pblapply(Nbmin:Nbmax,Effective_bottleneck_size_KL,shared_site_table=shared_site_table)
-  print(paste(nrow(shared_site_table),"sites were used in calculation"))
+  if(nrow(shared_site_table) > 0){
+    print(paste(nrow(shared_site_table),"sites were used in calculation"))
+  }
   final_likelihood_vector=data.frame(likelihood_vector)
   name_v=Nbmin:Nbmax
   class(name_v)="character"
@@ -479,7 +489,9 @@ Range_function_Approximate<-function(variant_calling,table,Nbmin,Nbmax){
     variant_calling <- VC_APPROX_ZERO_FLOOR
   }
   res_list=pblapply(Nbmin:Nbmax,one_Nbval_function_Approximate,variant_calling=variant_calling,table=table)
-  print(paste(nrow(table),"sites were used in calculation"))
+  if(nrow(table) > 0){
+    print(paste(nrow(table),"sites were used in calculation"))
+  }
   final_likelihood_vector=data.frame(res_list)
   name_v=Nbmin:Nbmax
   class(name_v)="character"
@@ -540,7 +552,9 @@ one_Nbval_function_Exact<- function(k,table,variant_calling){
 
 Range_function_Exact<-function(variant_calling,table,Nbmin,Nbmax){
   res_list=pblapply(Nbmin:Nbmax,one_Nbval_function_Exact,variant_calling=variant_calling,table=table)
-  print(paste(nrow(table),"sites were used in calculation"))
+  if(nrow(table) > 0){
+    print(paste(nrow(table),"sites were used in calculation"))
+  }
   final_likelihood_vector=data.frame(res_list)
   name_v=Nbmin:Nbmax
   class(name_v)="character"
@@ -562,7 +576,9 @@ one_Nbval_function_preOrabsent <- function(k,table,variant_calling){
 
 Range_function_preOrabsent <- function(variant_calling,table,Nbmin,Nbmax){
   likelihood_list=pblapply(Nbmin:Nbmax,one_Nbval_function_preOrabsent,table=table,variant_calling=variant_calling)
-  print(paste(nrow(table),"sites were used in calculation"))
+  if(nrow(table) > 0){
+    print(paste(nrow(table),"sites were used in calculation"))
+  }
   final_likelihood_vector=data.frame(likelihood_list)
   name_v=Nbmin:Nbmax
   class(name_v)="character"
@@ -610,7 +626,9 @@ one_Nbval_function_binomial <- function(k,table,variant_calling){
 
 Range_function_binomial <- function(variant_calling,table,Nbmin,Nbmax){
   likelihood_list=pblapply(Nbmin:Nbmax,one_Nbval_function_binomial,table=table,variant_calling=variant_calling)
-  print(paste(nrow(table),"sites were used in calculation"))
+  if(nrow(table) > 0){
+    print(paste(nrow(table),"sites were used in calculation"))
+  }
   final_likelihood_vector=data.frame(likelihood_list)
   name_v=Nbmin:Nbmax
   class(name_v)="character"
@@ -899,6 +917,13 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   if(method != "KL"){
     table=filter_denovo_sites_for_nonKL(table, error_calling=error_calling)
   }
+  # If no sites survive filtering, skip likelihood/vector and plotting.
+  if(method != "KL" && nrow(table)==0){
+    if(plot==TRUE){
+      warning("After filtering, 0 sites are available for method=", method, "; skip plot.")
+    }
+    return(list(NA_real_, NA_real_, NA_real_))
+  }
   if(log==TRUE){
    write.csv(table,paste0(transmisson_id,"_log.csv"),row.names = FALSE) 
   }
@@ -906,7 +931,10 @@ one_transmission_pair_process <- function(one_pair,method,donor_depth_threshold,
   if(method == "KL"){
     KL_tidy_table=Create_variant_identificatin_forKL(shared_table, tidy_table,variant_calling)
     if(nrow(KL_tidy_table)==0){
-      warning("KL: 0 sites will be used. tidy_table rows=", nrow(tidy_table))
+      if(plot==TRUE){
+        warning("After filtering, 0 KL sites are available; skip plot and likelihood vector.")
+      }
+      return(list(NA_real_, NA_real_, NA_real_))
     }
     v=Range_function_KL(KL_tidy_table,Nbmin,Nbmax)
     res=find_confidence_interval(v,Nbmin=Nbmin)
