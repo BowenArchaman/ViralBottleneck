@@ -187,11 +187,29 @@ Convert_to_Approxmate_method_matrix <- function(prepared_matrix){
 }
 
 Convert_to_Exact_method_matrix<- function(prepared_matrix){
-  # Legacy total-reads definition for Exact/Binomial:
-  # use recipient dominant + subdominant reads.
-  matrix=cbind.data.frame(prepared_matrix[,15,drop=FALSE],prepared_matrix[,18:19,drop=FALSE])
-  matrix$sum=rowSums(matrix[,2:3,drop=FALSE])
-  Exact_matix=cbind.data.frame(matrix[,1,drop=FALSE],matrix[,3:4,drop=FALSE])
+  # Exact/Binomial input: (do.subdom, re.subdom_reads, re.total_reads).
+  # re.total_reads is the sum of 4 recipient base reads (tidy), not dom+subdom only.
+  empty_exact <- function(){
+    out <- data.frame(matrix(nrow = 0, ncol = 3))
+    names(out) <- c("do.subdom", "re.subdom_reads", "re.total_reads")
+    out
+  }
+  if(nrow(prepared_matrix) == 0){
+    return(empty_exact())
+  }
+  if(all(c("do.subdom", "re.subdom_reads", "re.total_reads") %in% names(prepared_matrix))){
+    Exact_matix <- prepared_matrix[, c("do.subdom", "re.subdom_reads", "re.total_reads"), drop = FALSE]
+  } else if(ncol(prepared_matrix) >= 20){
+    Exact_matix <- cbind.data.frame(
+      prepared_matrix[, 15, drop = FALSE],
+      prepared_matrix[, 19, drop = FALSE],
+      prepared_matrix[, 20, drop = FALSE]
+    )
+    names(Exact_matix) <- c("do.subdom", "re.subdom_reads", "re.total_reads")
+  } else {
+    warning("Exact matrix conversion failed: expected do.subdom, re.subdom_reads, re.total_reads.")
+    return(empty_exact())
+  }
   return(Exact_matix)
 }
 
