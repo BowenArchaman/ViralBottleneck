@@ -20,7 +20,9 @@ Create_shared_variant_site_table <- function(transmission_pair,NonSyn_or_Syn){
     recipient_table=recipient_table[,-6]
   }
   shared_table=merge(donor_table,recipient_table, by.x=1,by.y=1)
-  names(shared_table)=c("variant_ID",names(donor_table)[2:5],names(recipient_table)[2:5])
+  # Canonical names after dropping variant_ID: donor A/T/C/G then recipient A/T/C/G.
+  # Use A.1.. for recipient so names stay unique through later merges.
+  names(shared_table)=c("variant_ID","A","T","C","G","A.1","T.1","C.1","G.1")
   row.names(shared_table)=shared_table[,1]
   shared_table=shared_table[,-1]
   return(shared_table)
@@ -80,7 +82,8 @@ tidy_up_shared_sites_table <- function(shared_table,donor_depth_threshold, recip
   tidy_table=tidy_table[,-6]
   row.names(tidy_table)=tidy_table[,1]
   tidy_table=tidy_table[,-1]
-  names(tidy_table)=c(paste0("do.",names(Donor)[1:4]),paste0("re.",names(recipient)[1:4]))
+  # Always use canonical names (donor/recipient count tables may be A/A.1 after shared merge).
+  names(tidy_table)=c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G")
   tidy_table$re.total_reads=re_total_reads
   return(tidy_table)
 }

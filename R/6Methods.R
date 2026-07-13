@@ -23,14 +23,42 @@ Before_calculation_table<-function(one_pair,donor_depth_threshold, recipient_dep
 
 
 create_max_f <- function(shared_site,tidy_table){
-  mix=merge(tidy_table,shared_site,by.x=0,by.y=0)
-  row.names(mix)=mix[,1]
-  mix=mix[,-1,drop=FALSE]
-  donor=mix[,1:4,drop=FALSE]
-  donor$d_max=apply(donor,1,max)
-  # include re.total_reads (tidy col 9) and shared_site cols: mix[,5:17], then drop 10:13 as before
-  max_table=cbind.data.frame(donor,mix[,5:17,drop=FALSE])
-  max_table=max_table[,-(10:13),drop=FALSE]
+  # Build a stable, named mix table. Positional drop of cols 10:13 previously deleted
+  # re.total_reads and scrambled names (re.A.1 / G / A.1...), which broke Exact/Binomial.
+  ss <- as.data.frame(shared_site, stringsAsFactors = FALSE)
+  if(ncol(ss) < 8){
+    stop("shared_site must contain 8 base-count columns (donor A/T/C/G + recipient A/T/C/G).")
+  }
+  names(ss)[1:4] <- paste0("shared_do.", c("A","T","C","G"))
+  names(ss)[5:8] <- paste0("shared_re.", c("A","T","C","G"))
+
+  need_tidy <- c("do.A","do.T","do.C","do.G","re.A","re.T","re.C","re.G","re.total_reads")
+  # Tolerate legacy tidy names like re.A.1 from older shared-table merges.
+  if(!all(need_tidy %in% names(tidy_table))){
+    alt <- c("do.A","do.T","do.C","do.G","re.A.1","re.T.1","re.C.1","re.G.1","re.total_reads")
+    if(all(alt %in% names(tidy_table))){
+      tidy_table <- tidy_table[, alt, drop=FALSE]
+      names(tidy_table) <- need_tidy
+    } else {
+      stop("tidy_table missing required columns: ", paste(setdiff(need_tidy, names(tidy_table)), collapse=", "))
+    }
+  }
+  tt <- tidy_table[, need_tidy, drop=FALSE]
+
+  mix <- merge(tt, ss[, 1:8, drop=FALSE], by.x=0, by.y=0)
+  row.names(mix) <- mix[,1]
+  mix <- mix[,-1, drop=FALSE]
+
+  donor <- mix[, c("do.A","do.T","do.C","do.G"), drop=FALSE]
+  donor$d_max <- apply(donor, 1, max)
+
+  max_table <- cbind.data.frame(
+    donor,
+    mix[, c("re.A","re.T","re.C","re.G","re.total_reads"), drop=FALSE],
+    # Recipient raw counts from shared table (used to recover re.dom_reads / re.subdom_reads)
+    mix[, c("shared_re.A","shared_re.T","shared_re.C","shared_re.G"), drop=FALSE]
+  )
+  names(max_table)[11:14] <- c("shared_re.A","shared_re.T","shared_re.C","shared_re.G")
   return(max_table)
 }
 
@@ -49,6 +77,7 @@ find_dominant_in_recipient <- function(row){
 
 find_variant_in_recipient <- function(row){
   # Floating-point comparison can fail exact equality; always return one scalar.
+  # row layout: [do.A..G (1:4), re.* or reads (5:8), do.dom_freq (9), do.subdom_freq (10)]
   index=which(row[1:4]==row[10])
   if(length(index)==0){
     index=which.min(abs(row[1:4]-row[10]))
@@ -60,16 +89,15 @@ find_variant_in_recipient <- function(row){
 Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_calling){
   mix=create_max_f(shared_table,tidy_shared_table)
   empty_res <- function(){
-    out=data.frame(matrix(nrow=0, ncol=19))
-    # Keep empty output schema aligned with downstream Prepared_matrix_for_methods.
+    out=data.frame(matrix(nrow=0, ncol=20))
     names(out)=c("do.A","do.T","do.C","do.G","d_max",
                  "re.A","re.T","re.C","re.G","re.total_reads",
-                 "shared_site1","shared_site2","shared_site3",
+                 "shared_re.A","shared_re.T","shared_re.C","shared_re.G",
                  "do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads")
     out
   }
   if(nrow(mix)==0){ return(empty_res()) }
-  donor=mix[,1:4,drop=FALSE]
+  donor=mix[,c("do.A","do.T","do.C","do.G"),drop=FALSE]
   # When only one row, apply(...,1,...) returns a vector -> t() gives 4x1; we need 1x4 with row names
   if(nrow(donor)==1){
     sort=matrix(sort(as.numeric(donor[1,]),decreasing=TRUE),nrow=1)
@@ -84,15 +112,28 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_c
   if(nrow(sort)==0){ return(empty_res()) }
   sort=sort[sort[,3]<=variant_calling,,drop=FALSE]
   if(nrow(sort)==0){ return(empty_res()) }
-  res=merge(mix,sort,by.x=0,by.y=0)
+  # Keep first two sorted donor freqs as do.dom / do.subdom
+  sort_df=as.data.frame(sort[,1:2,drop=FALSE])
+  names(sort_df)=c("do.dom","do.subdom")
+  res=merge(mix,sort_df,by.x=0,by.y=0)
   row.names(res)=res[,1]
-  res=res[,2:19,drop=FALSE]
-  cb1=cbind.data.frame(res[,1:4,drop=FALSE],res[,6:9,drop=FALSE],res[,15:16,drop=FALSE])
-  res[,"V3"]=vapply(seq_len(nrow(cb1)), function(i) find_dominant_in_recipient(as.numeric(cb1[i,])), numeric(1))
-  res[,"V4"]=vapply(seq_len(nrow(cb1)), function(i) find_variant_in_recipient(as.numeric(cb1[i,])), numeric(1))
-  cb2=cbind.data.frame(res[,1:4,drop=FALSE],res[,11:14,drop=FALSE],res[,15:16,drop=FALSE])
-  res$V5=vapply(seq_len(nrow(cb2)), function(i) find_dominant_in_recipient(as.numeric(cb2[i,])), numeric(1))
-  res$V6=vapply(seq_len(nrow(cb2)), function(i) find_variant_in_recipient(as.numeric(cb2[i,])), numeric(1))
+  res=res[,-1,drop=FALSE]
+
+  cb1=cbind.data.frame(
+    res[,c("do.A","do.T","do.C","do.G"),drop=FALSE],
+    res[,c("re.A","re.T","re.C","re.G"),drop=FALSE],
+    res[,c("do.dom","do.subdom"),drop=FALSE]
+  )
+  res$re.dom=vapply(seq_len(nrow(cb1)), function(i) find_dominant_in_recipient(as.numeric(cb1[i,])), numeric(1))
+  res$re.subdom=vapply(seq_len(nrow(cb1)), function(i) find_variant_in_recipient(as.numeric(cb1[i,])), numeric(1))
+
+  cb2=cbind.data.frame(
+    res[,c("do.A","do.T","do.C","do.G"),drop=FALSE],
+    res[,c("shared_re.A","shared_re.T","shared_re.C","shared_re.G"),drop=FALSE],
+    res[,c("do.dom","do.subdom"),drop=FALSE]
+  )
+  res$re.dom_reads=vapply(seq_len(nrow(cb2)), function(i) find_dominant_in_recipient(as.numeric(cb2[i,])), numeric(1))
+  res$re.subdom_reads=vapply(seq_len(nrow(cb2)), function(i) find_variant_in_recipient(as.numeric(cb2[i,])), numeric(1))
   return(res)
 }
 
@@ -101,20 +142,23 @@ Create_matrix_for_biallelic <- function(shared_table,tidy_shared_table,variant_c
 #filter the variants which would not be distinguished from errors.
 Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,variant_calling){
   res=Create_matrix_for_biallelic(shared_sites_table,tidy_sites_table,variant_calling)
+  info_cols=c("do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads")
   if(nrow(res)==0){
     warning("No biallelic sites passed filters; returning empty prepared matrix.")
-    res_info=res[,14:19,drop=FALSE]
-    names(res_info)=c("do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads")
-    res_info$re.total_reads=numeric(0)
-    prepared_matrix=cbind.data.frame(res[,1:13,drop=FALSE],res_info)
-    return(prepared_matrix)
+    empty=data.frame(matrix(nrow=0, ncol=20))
+    names(empty)=c("do.A","do.T","do.C","do.G","d_max",
+                   "re.A","re.T","re.C","re.G",
+                   "shared_re.A","shared_re.T","shared_re.C","shared_re.G",
+                   "do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads",
+                   "re.total_reads")
+    return(empty)
   }
   if(nrow(res)==1){
     warning("Only one variant site is available; bottleneck size estimation with a single site is unreliable.")
   }
   # Report recipient bases that appear but donor has zero (re.A/T/C/G present where do.A/T/C/G absent)
-  do_bases=res[,1:4,drop=FALSE]
-  re_bases=res[,6:9,drop=FALSE]
+  do_bases=res[,c("do.A","do.T","do.C","do.G"),drop=FALSE]
+  re_bases=res[,c("re.A","re.T","re.C","re.G"),drop=FALSE]
   base_names=c("A","T","C","G")
   for(j in seq_len(4)){
     re_has_do_not=which(re_bases[,j]>0 & do_bases[,j]<=0)
@@ -123,11 +167,12 @@ Prepared_matrix_for_methods <- function(shared_sites_table,tidy_sites_table,vari
       warning("Recipient has base '", base_names[j], "' (non-zero reads) at site(s) where donor has none: ", site_ids)
     }
   }
-  res_info=res[,14:19,drop=FALSE]
-  names(res_info)=c("do.dom","do.subdom","re.dom","re.subdom","re.dom_reads","re.subdom_reads")
-  # re.total_reads = sum of 4 base reads, computed in tidy_up_shared_sites_table (res[,10]); avoids 0 when dom+subdom=0 (base totally switched)
-  res_info$re.total_reads=res[,10]
-  prepared_matrix=cbind.data.frame(res[,1:13,drop=FALSE],res_info)
+  prepared_matrix=cbind.data.frame(
+    res[,c("do.A","do.T","do.C","do.G","d_max","re.A","re.T","re.C","re.G"),drop=FALSE],
+    res[,c("shared_re.A","shared_re.T","shared_re.C","shared_re.G"),drop=FALSE],
+    res[,info_cols,drop=FALSE],
+    re.total_reads=res[["re.total_reads"]]
+  )
   return(prepared_matrix)
 }
 
