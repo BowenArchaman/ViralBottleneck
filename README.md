@@ -25,3 +25,7 @@ library(ViralBottleneck)
 - pbapply
 - rmutil
 
+## Citation
+Please cite the following manuscript when you use the R package:
+
+Zheng B, Johnson PCD, Hughes J. **ViralBottleneck: an R package for estimating viral transmission bottlenecks from deep sequencing data using multiple methods.** Virus Evol. 2025 Sep 19;11(1):veaf071. [doi: 10.1093/ve/veaf071](https://doi.org/10.1093/ve/veaf071). Erratum in: Virus Evol. 2026 Aug 14;12(1):veag055. doi: 10.1093/ve/veag055. PMID: 41089325; PMCID: PMC12516950.
